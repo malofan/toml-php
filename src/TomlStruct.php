@@ -120,7 +120,7 @@ final class TomlStruct
         $res = [];
 
         $ptr++;
-        while (($c = TomlUtils::getSymbol($str, $ptr++)) !== ']' && $c) {
+        while (($c = TomlUtils::getSymbol($str, $ptr++)) !== ']') {
             if ($c === ',') {
                 throw new TomlError('expected value, found comma', [
                     'toml' => $str,

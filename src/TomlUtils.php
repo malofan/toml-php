@@ -32,6 +32,11 @@ final class TomlUtils
 
     public static function stringSlice($str, $start, $end): string
     {
+        var_dump([
+            'str' => $str,
+            'start' => $start,
+            'end' => $end,
+        ]);
         $end = $end - $start;
 
         return substr($str, $start, $end);
@@ -131,7 +136,7 @@ final class TomlUtils
 
         throw new TomlError('cannot find end of structure', [
             'toml' => $str,
-            'ptr' => 'ptr',
+            'ptr' => $ptr,
         ]);
     }
 
