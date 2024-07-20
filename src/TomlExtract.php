@@ -42,7 +42,7 @@ final class TomlExtract
     /**
      * @throws TomlError
      */
-    public static function extractValue($str, $ptr, $end): array
+    public static function extractValue($str, $ptr, $end = ''): array
     {
         $c = TomlUtils::getSymbol($str, $ptr);
         if ($c === '[' || $c === '{') {
