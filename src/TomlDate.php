@@ -12,13 +12,14 @@ use DateTimeZone;
  */
 final class TomlDate
 {
-
     public const ISO_FORMAT = 'Y-m-d\TH:i:s.000\Z';
 
     public const TOML_DATE_RE = "/^(?'date'\d{4}-\d{2}-\d{2})?[T ]?(?:(?'hours'\d{2}):\d{2}:\d{2}(?:\.\d+)?)?(?'offset'Z|[-+]\d{2}:\d{2})?$/i";
 
     protected bool $hasDate = false;
+
     protected bool $hasTime = false;
+
     protected ?string $offset = null;
 
     protected Carbon $carbon;
@@ -33,23 +34,25 @@ final class TomlDate
             preg_match(self::TOML_DATE_RE, $date, $matches);
 
             if ($matches) {
-                if (!($matches['date'] ?? false)) {
+                if (! ($matches['date'] ?? false)) {
                     $hasDate = false;
                     $date = "0000-01-01T$date";
                 }
 
-                $hasTime = (bool)($matches['hours'] ?? false);
+                $hasTime = (bool) ($matches['hours'] ?? false);
 
                 // Do not allow rollover hours
                 if (($matches['hours'] ?? false) && $matches['hours'] && $matches['hours'] > 23) {
-                    $date = "";
+                    $date = '';
                 } else {
                     $offset = $matches['offset'] ?? null;
                     $date = strtoupper($date);
-                    if (!$offset && $hasTime) $date .= "Z";
+                    if (! $offset && $hasTime) {
+                        $date .= 'Z';
+                    }
                 }
             } else {
-                $date = "";
+                $date = '';
             }
         }
 
@@ -72,17 +75,17 @@ final class TomlDate
 
     public function isLocal(): bool
     {
-        return !$this->hasDate || !$this->hasTime || !$this->offset;
+        return ! $this->hasDate || ! $this->hasTime || ! $this->offset;
     }
 
     public function isDate(): bool
     {
-        return $this->hasDate && !$this->hasTime;
+        return $this->hasDate && ! $this->hasTime;
     }
 
     public function isTime(): bool
     {
-        return $this->hasTime && !$this->hasDate;
+        return $this->hasTime && ! $this->hasDate;
     }
 
     public function isValid(): bool
@@ -94,6 +97,7 @@ final class TomlDate
     {
         $date = new self($d);
         $date->offset = $offset;
+
         return $date;
     }
 
@@ -101,6 +105,7 @@ final class TomlDate
     {
         $date = new self($d);
         $date->offset = null;
+
         return $date;
     }
 
@@ -109,6 +114,7 @@ final class TomlDate
         $date = new self($d);
         $date->hasTime = false;
         $date->offset = null;
+
         return $date;
     }
 
@@ -117,6 +123,7 @@ final class TomlDate
         $date = new self($d);
         $date->hasDate = false;
         $date->offset = null;
+
         return $date;
     }
 
@@ -132,7 +139,7 @@ final class TomlDate
             return substr($iso, 11, 8);
         }
 
-        if (!$this->offset) {
+        if (! $this->offset) {
             return substr($iso, 0, -1);
         }
 
@@ -140,12 +147,13 @@ final class TomlDate
             return $iso;
         }
 
-        $offset = ((int)substr($this->offset, 1, 3)) * 60 + ((int)substr($this->offset, 4, 6));
+        $offset = ((int) substr($this->offset, 1, 3)) * 60 + ((int) substr($this->offset, 4, 6));
         $offset = $this->offset[0] === '-' ? $offset : -$offset;
 
         $offsetDate = new Carbon('now', new DateTimeZone('UTC'));
-        $offsetDate = $offsetDate->setTimestamp((int)($this->carbon->getTimestamp() - $offset * 60));
-		return substr($offsetDate->format('Y-m-d\TH:i:s.000\Z'), 0, -1) . $this->offset;
+        $offsetDate = $offsetDate->setTimestamp((int) ($this->carbon->getTimestamp() - $offset * 60));
+
+        return substr($offsetDate->format('Y-m-d\TH:i:s.000\Z'), 0, -1).$this->offset;
     }
 }
 

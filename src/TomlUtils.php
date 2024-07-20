@@ -2,22 +2,44 @@
 
 namespace Devium\Toml;
 
-require_once "./vendor/autoload.php";
+require_once './vendor/autoload.php';
 
 /**
  * @internal
  */
 final class TomlUtils
 {
+    public static function setHas(&$set, $array): bool
+    {
+        if (is_array($array)) {
+            ksort($array);
+            $array = json_encode($array);
+        }
+
+        return array_key_exists($array, $set);
+    }
+
+    public static function setAdd(&$set, $array): void
+    {
+        if (! self::setHas($set, $array)) {
+            if (is_array($array)) {
+                ksort($array);
+                $array = json_encode($array);
+            }
+            $set[$array] = 1;
+        }
+    }
+
     public static function stringSlice($str, $start, $end): string
     {
         $end = $end - $start;
+
         return substr($str, $start, $end);
     }
 
     public static function getSymbol($str, $index): string
     {
-        return $str[$index] ?? "";
+        return $str[$index] ?? '';
     }
 
     public static function indexOfNewLine($string, $start = 0, $end = null): int
@@ -29,7 +51,10 @@ final class TomlUtils
         if ($pos === false) {
             return -1;
         }
-        if ($pos > 0 && self::getSymbol($string, $pos - 1) === "\r") $pos--;
+        if ($pos > 0 && self::getSymbol($string, $pos - 1) === "\r") {
+            $pos--;
+        }
+
         return $pos <= $end ? $pos : -1;
     }
 
@@ -37,14 +62,18 @@ final class TomlUtils
     {
         for ($i = $ptr; $i < strlen($string); $i++) {
             $c = self::getSymbol($string, $i);
-            if ($c === "\n") return $i;
+            if ($c === "\n") {
+                return $i;
+            }
 
-            if ($c === "\r" && self::getSymbol($string, $i + 1) === "\n") return $i + 1;
+            if ($c === "\r" && self::getSymbol($string, $i + 1) === "\n") {
+                return $i + 1;
+            }
 
             if (($c < "\x20" && $c !== "\t") || $c === "\x7f") {
-                throw new TomlError("control characters are not allowed in comments", [
-                    "toml" => $string,
-                    "ptr" => $ptr,
+                throw new TomlError('control characters are not allowed in comments', [
+                    'toml' => $string,
+                    'ptr' => $ptr,
                 ]);
             }
         }
@@ -57,16 +86,16 @@ final class TomlUtils
         $ptr,
         $banNewLines = null,
         $banComments = null
-    ): int
-    {
+    ): int {
         while (
-            ($c = self::getSymbol($str, $ptr)) === " " ||
+            ($c = self::getSymbol($str, $ptr)) === ' ' ||
             $c === "\t" ||
-            (!$banNewLines && ($c === "\n" || ($c === "\r" && self::getSymbol($str, $ptr + 1) === "\n")))
-        )
+            (! $banNewLines && ($c === "\n" || ($c === "\r" && self::getSymbol($str, $ptr + 1) === "\n")))
+        ) {
             $ptr++;
+        }
 
-        return $banComments || $c !== "#"
+        return $banComments || $c !== '#'
             ? $ptr
             : self::skipVoid($str, self::skipComment($str, $ptr), $banNewLines);
     }
@@ -77,22 +106,22 @@ final class TomlUtils
         $sep,
         $end = null,
         $banNewLines = null
-    )
-    {
-        if (!$end) {
+    ) {
+        if (! $end) {
             $ptr = self::indexOfNewline($str, $ptr);
+
             return $ptr < 0 ? strlen($str) : $ptr;
         }
 
         for ($i = $ptr; $i < strlen($str); $i++) {
             $c = self::getSymbol($str, $i);
-            if ($c === "#") {
+            if ($c === '#') {
                 $i = self::indexOfNewline($str, $i);
-            } else if ($c === $sep) {
+            } elseif ($c === $sep) {
                 return $i + 1;
-            } else if ($c === $end) {
+            } elseif ($c === $end) {
                 return $i;
-            } else if (
+            } elseif (
                 $banNewLines &&
                 ($c === "\n" || ($c === "\r" && self::getSymbol($str, $i + 1) === "\n"))
             ) {
@@ -100,9 +129,9 @@ final class TomlUtils
             }
         }
 
-        throw new TomlError("cannot find end of structure", [
-            "toml" => $str,
-            "ptr" => "ptr",
+        throw new TomlError('cannot find end of structure', [
+            'toml' => $str,
+            'ptr' => 'ptr',
         ]);
     }
 
@@ -119,19 +148,24 @@ final class TomlUtils
         if ($pos === false) {
             return -1;
         }
-        do $seek = $pos;
-        while (
+        do {
+            $seek = $pos;
+        } while (
             $seek > -1 &&
             $first !== "'" &&
-            self::getSymbol($str, $seek - 1) === "\\" &&
-            self::getSymbol($str, $seek - 2) !== "\\"
+            self::getSymbol($str, $seek - 1) === '\\' &&
+            self::getSymbol($str, $seek - 2) !== '\\'
         );
 
         if ($seek > -1) {
             $seek += strlen($target);
             if (strlen($target) > 1) {
-                if (self::getSymbol($str, $seek) === $first) $seek++;
-                if (self::getSymbol($str, $seek) === $first) $seek++;
+                if (self::getSymbol($str, $seek) === $first) {
+                    $seek++;
+                }
+                if (self::getSymbol($str, $seek) === $first) {
+                    $seek++;
+                }
             }
         }
 
