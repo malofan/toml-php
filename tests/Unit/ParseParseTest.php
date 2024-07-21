@@ -1,19 +1,17 @@
 <?php
 
-use Devium\Toml\TomlDate;
 use Devium\Toml\TomlError;
 use Devium\Toml\TomlParse;
-use Devium\Toml\TomlPrimitive;
 
-it('parses a simple key-value', function() {
+it('parses a simple key-value', function () {
     expect(TomlParse::parse('key = "value"'))->toEqual(json_decode('{ "key": "value" }', true));
-	expect(TomlParse::parse("key = \"value\"\nother = 1"))->toEqual(json_decode("{ key: 'value', other: 1 }", true));
-	expect(TomlParse::parse("key = \"value\"\r\nother = 1"))->toEqual(json_decode("{ key: 'value', other: 1 }", true));
+    expect(TomlParse::parse("key = \"value\"\nother = 1"))->toEqual(json_decode("{ key: 'value', other: 1 }", true));
+    expect(TomlParse::parse("key = \"value\"\r\nother = 1"))->toEqual(json_decode("{ key: 'value', other: 1 }", true));
 });
 
-it('parses dotted key-values', function() {
+it('parses dotted key-values', function () {
     expect(TomlParse::parse("fruit.apple.color = \"red\"\nfruit.apple.taste.sweet = true"))
-    ->toEqual(json_decode("{ fruit: { apple: { color: 'red', taste: { sweet: true } } } }", true));
+        ->toEqual(json_decode("{ fruit: { apple: { color: 'red', taste: { sweet: true } } } }", true));
 });
 
 //it('handles comments', function() {
