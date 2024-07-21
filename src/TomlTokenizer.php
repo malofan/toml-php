@@ -39,7 +39,6 @@ final class TomlTokenizer
     public function take(...$types): bool
     {
         $token = $this->peek();
-        var_dump(json_encode([$types, $token]));
         if (in_array($token['type'], $types, true)) {
             $this->next();
 
@@ -54,7 +53,6 @@ final class TomlTokenizer
      */
     public function assert(...$types): void
     {
-        var_dump(json_encode($types));
         if (! $this->take(...$types)) {
             throw new TomlError();
         }
@@ -125,7 +123,7 @@ final class TomlTokenizer
 
     public function isPunctuatorOrNewline($char): bool
     {
-        return array_key_exists($char, self::PUNCTUATOR_OR_NEWLINE_TOKENS);
+        return isset(self::PUNCTUATOR_OR_NEWLINE_TOKENS[$char]);
     }
 
     public const ESCAPES = [

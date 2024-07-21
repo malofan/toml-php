@@ -37,7 +37,7 @@ final class TomlInputIterator
         return false;
     }
 
-    public function next(): int|string
+    public function next(): string
     {
         if ($this->pos + 1 === strlen($this->input)) {
             return -1;

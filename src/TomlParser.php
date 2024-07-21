@@ -108,7 +108,6 @@ final class TomlParser
     {
         for (; ;) {
             $node = $this->expression();
-            //var_dump(['node' => $node]);
             if (! $node) {
                 break;
             }
@@ -135,8 +134,6 @@ final class TomlParser
     {
         $this->takeCommentsAndNewlines();
         $token = $this->tokenizer->peek();
-
-        //var_dump(['token' => $token]);
 
         return match ($token['type']) {
             'LEFT_SQUARE_BRACKET' => $this->table(),
@@ -199,10 +196,6 @@ final class TomlParser
         $this->tokenizer->take('WHITESPACE');
         $value = $this->value();
 
-        var_dump(json_encode([
-            'хуй' => ['type' => 'KEY_VALUE_PAIR', 'key' => $key, 'value' => $value],
-        ]));
-
         return ['type' => 'KEY_VALUE_PAIR', 'key' => $key, 'value' => $value];
     }
 
@@ -212,8 +205,6 @@ final class TomlParser
     public function value(): array
     {
         $token = $this->tokenizer->next();
-
-        var_dump(['token!' => $token]);
 
         return match ($token['type']) {
             'STRING' => [
