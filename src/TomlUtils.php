@@ -9,6 +9,26 @@ require_once './vendor/autoload.php';
  */
 final class TomlUtils
 {
+    public static function isDecimal($char): bool
+    {
+        return $char >= '0' && $char <= '9';
+    }
+
+    public static function isHexadecimal($char): bool
+    {
+        return ($char >= 'A' && $char <= 'Z') || ($char >= 'a' && $char <= 'z') || ($char >= '0' && $char <= '9');
+    }
+
+    public static function isOctal($char): bool
+    {
+        return $char >= '0' && $char <= '7';
+    }
+
+    public static function isBinary($char): bool
+    {
+        return $char === '0' || $char === '1';
+    }
+
     public static function setHas(&$set, $array): bool
     {
         if (is_array($array)) {
