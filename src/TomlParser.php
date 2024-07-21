@@ -17,7 +17,7 @@ final class TomlParser
 
     protected array $tableNode;
 
-    public function __constructor(string $input): void
+    public function __construct(string $input)
     {
         $this->tokenizer = new TomlTokenizer($input);
         $this->keystore = new TomlKeystore();

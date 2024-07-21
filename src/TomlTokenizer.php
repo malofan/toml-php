@@ -10,7 +10,7 @@ final class TomlTokenizer
 
     protected TomlInputIterator $iterator;
 
-    public function __constructor(string $input): void
+    public function __construct(string $input)
     {
         $this->input = $input;
         $this->iterator = new TomlInputIterator($input);
