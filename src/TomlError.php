@@ -2,8 +2,6 @@
 
 namespace Devium\Toml;
 
-require_once './vendor/autoload.php';
-
 use Exception;
 
 /**

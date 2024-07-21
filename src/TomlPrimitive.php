@@ -4,8 +4,6 @@ namespace Devium\Toml;
 
 use Throwable;
 
-require_once './vendor/autoload.php';
-
 /**
  * @internal
  */
