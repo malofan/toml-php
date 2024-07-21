@@ -39,6 +39,7 @@ final class TomlTokenizer
     public function take(...$types): bool
     {
         $token = $this->peek();
+        var_dump(json_encode([$types, $token]));
         if (in_array($token['type'], $types, true)) {
             $this->next();
 
@@ -53,6 +54,7 @@ final class TomlTokenizer
      */
     public function assert(...$types): void
     {
+        var_dump(json_encode($types));
         if (! $this->take(...$types)) {
             throw new TomlError();
         }
@@ -203,7 +205,7 @@ final class TomlTokenizer
         }
         switch ($char) {
             case ' ':
-            case '\t':
+            case "\t":
                 return $this->scanWhitespace($start);
             case '#':
                 return $this->scanComment($start);
@@ -242,19 +244,19 @@ final class TomlTokenizer
                     }
                     $value .= $char;
 
-                    continue 2;
+                    continue;
                 case $delimiter:
                     if ($isMultiline) {
                         if (! $this->iterator->take($delimiter)) {
                             $value .= $delimiter;
 
-                            continue 2;
+                            continue;
                         }
                         if (! $this->iterator->take($delimiter)) {
                             $value .= $delimiter;
                             $value .= $delimiter;
 
-                            continue 2;
+                            continue;
                         }
                         if ($this->iterator->take($delimiter)) {
                             $value .= $delimiter;
@@ -306,7 +308,7 @@ final class TomlTokenizer
                                 }
                                 throw new TomlError();
                             }
-                            $value += $char;
+                            $value .= $char;
                             break;
                     }
             }

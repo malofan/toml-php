@@ -61,23 +61,3 @@ final class TomlError extends Exception
         return $codeBlock;
     }
 }
-//
-//$exception = new TomlError('unexpected woof!!', [
-//    'toml' => 'meow meow woof meow',
-//    'ptr' => strpos('meow meow woof meow', 'woof'),
-//]);
-//
-//var_dump($exception->tomlLine);
-//var_dump($exception->tomlColumn);
-//echo($exception->tomlCodeBlock);
-//var_dump($exception->tomlCodeBlock === "1:  meow meow woof meow\n              ^\n");
-//
-//$exception = new TomlError('unexpected woof!!', [
-//    'toml' => "meow meow woof meow\nmeow meow meow meow",
-//    'ptr' => strpos("meow meow woof meow\nmeow meow meow meow", 'woof'),
-//]);
-//
-//var_dump($exception->tomlLine);
-//var_dump($exception->tomlColumn);
-//echo($exception->tomlCodeBlock);
-//var_dump($exception->tomlCodeBlock === "1:  meow meow woof meow\n              ^\n2:  meow meow meow meow\n");
