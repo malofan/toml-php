@@ -4,16 +4,13 @@ namespace Devium\Toml;
 
 use Throwable;
 
-/**
- * @internal
- */
 final class TomlTokenizer
 {
     protected string $input;
 
     protected TomlInputIterator $iterator;
 
-    public function __constructor($input): void
+    public function __constructor(string $input): void
     {
         $this->input = $input;
         $this->iterator = new TomlInputIterator($input);
@@ -245,19 +242,19 @@ final class TomlTokenizer
                     }
                     $value .= $char;
 
-                    continue;
+                    continue 2;
                 case $delimiter:
                     if ($isMultiline) {
                         if (! $this->iterator->take($delimiter)) {
                             $value .= $delimiter;
 
-                            continue;
+                            continue 2;
                         }
                         if (! $this->iterator->take($delimiter)) {
                             $value .= $delimiter;
                             $value .= $delimiter;
 
-                            continue;
+                            continue 2;
                         }
                         if ($this->iterator->take($delimiter)) {
                             $value .= $delimiter;
@@ -302,6 +299,7 @@ final class TomlTokenizer
                                     break;
                                 }
                                 if ($isMultiline && ($this->isWhitespace($char) || $char === "\n")) {
+                                    /** @noinspection PhpStatementHasEmptyBodyInspection */
                                     while ($this->iterator->take(' ', "\t", "\n")) {
                                     }
                                     break;
