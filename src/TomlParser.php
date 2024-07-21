@@ -53,7 +53,7 @@ final class TomlParser
     {
         try {
             return TomlLocalDateTime::fromString($value);
-        } catch (Throwable $e) {
+        } catch (Throwable) {
             throw new TomlError();
         }
     }

@@ -2,9 +2,6 @@
 
 namespace Devium\Toml;
 
-/**
- * @internal
- */
 abstract class TomlDateTime
 {
     public static function isYear($value): bool
