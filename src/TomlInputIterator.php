@@ -9,7 +9,7 @@ final class TomlInputIterator
 {
     protected string $input;
 
-    protected int $pos = -1;
+    public int $pos = -1;
 
     public function __construct(string $input)
     {
