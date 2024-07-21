@@ -32,11 +32,6 @@ final class TomlUtils
 
     public static function stringSlice($str, $start, $end): string
     {
-        var_dump([
-            'str' => $str,
-            'start' => $start,
-            'end' => $end,
-        ]);
         $end = $end - $start;
 
         return substr($str, $start, $end);
