@@ -1,17 +1,21 @@
 <?php
-function isDecimal($char) {
-    return '0' <= $char && $char <= '9';
+function isDecimal($char)
+{
+    return $char >= '0' && $char <= '9';
 }
 
-function isHexadecimal($char) {
-    return (('A' <= $char && $char <= 'Z') || ('a' <= $char && $char <= 'z') || ('0' <= $char && $char <= '9'));
+function isHexadecimal($char)
+{
+    return ($char >= 'A' && $char <= 'Z') || ($char >= 'a' && $char <= 'z') || ($char >= '0' && $char <= '9');
 }
 
-function isOctal($char) {
-    return '0' <= $char && $char <= '7';
+function isOctal($char)
+{
+    return $char >= '0' && $char <= '7';
 }
 
-function isBinary($char) {
+function isBinary($char)
+{
     return $char === '0' || $char === '1';
 }
 ?>
