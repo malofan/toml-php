@@ -16,7 +16,7 @@ final class TomlInputIterator
         $this->input = $input;
     }
 
-    public function peek(): int|string
+    public function peek(): string
     {
         $pos = $this->pos;
         $char = $this->next();
@@ -28,7 +28,7 @@ final class TomlInputIterator
     public function take(...$chars): bool
     {
         $char = $this->peek();
-        if ($char !== -1 && in_array($char, $chars)) {
+        if ($char !== '-1' && in_array($char, $chars)) {
             $this->next();
 
             return true;
@@ -40,7 +40,7 @@ final class TomlInputIterator
     public function next(): string
     {
         if ($this->pos + 1 === strlen($this->input)) {
-            return -1;
+            return '-1';
         }
         $this->pos++;
         $char = $this->input[$this->pos];
