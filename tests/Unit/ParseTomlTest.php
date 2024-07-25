@@ -2,11 +2,8 @@
 
 use Devium\Toml\TomlDecoder;
 
-it('can parse toml', function () {
-    $decoder = new TomlDecoder();
-
-    var_dump($decoder->decode('
-    # This is a TOML document
+$toml = <<<'TOML'
+# This is a TOML document
 
 title = "TOML Example"
 
@@ -29,5 +26,9 @@ role = "frontend"
 [servers.beta]
 ip = "10.0.0.2"
 role = "backend"
-    '));
+TOML;
+
+it('can parse toml', function () use ($toml) {
+    $decoder = new TomlDecoder();
+    $decoder->decode($toml);
 });

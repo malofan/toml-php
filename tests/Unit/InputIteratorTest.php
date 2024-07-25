@@ -2,7 +2,8 @@
 
 use Devium\Toml\TomlInputIterator;
 
-$toml = <<<'TOML'
+it('can iterate TOML string', function () {
+    $toml = <<<'TOML'
 # This is a TOML document
 
 title = "TOML Example"
@@ -27,8 +28,6 @@ role = "frontend"
 ip = "10.0.0.2"
 role = "backend"
 TOML;
-
-it('can iterate TOML string', function () use ($toml) {
     $iterator = new TomlInputIterator($toml);
 
     $string = '';

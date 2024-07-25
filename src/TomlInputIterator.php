@@ -7,13 +7,27 @@ namespace Devium\Toml;
  */
 final class TomlInputIterator
 {
-    protected string $input;
+    public const EOF = '-1';
 
     public int $pos = -1;
+
+    protected string $input;
 
     public function __construct(string $input)
     {
         $this->input = $input;
+    }
+
+    public function take(...$chars): bool
+    {
+        $char = $this->peek();
+        if ($char !== self::EOF && in_array($char, $chars)) {
+            $this->next();
+
+            return true;
+        }
+
+        return false;
     }
 
     public function peek(): string
@@ -25,22 +39,10 @@ final class TomlInputIterator
         return $char;
     }
 
-    public function take(...$chars): bool
-    {
-        $char = $this->peek();
-        if ($char !== '-1' && in_array($char, $chars)) {
-            $this->next();
-
-            return true;
-        }
-
-        return false;
-    }
-
     public function next(): string
     {
         if ($this->pos + 1 === strlen($this->input)) {
-            return '-1';
+            return self::EOF;
         }
         $this->pos++;
         $char = $this->input[$this->pos];

@@ -2,9 +2,6 @@
 
 namespace Devium\Toml;
 
-/**
- * @internal
- */
 final class TomlKeystore
 {
     private array $keys;
@@ -21,25 +18,6 @@ final class TomlKeystore
         $this->tables = [];
         $this->implicitTables = [];
         $this->arrayTables = [];
-    }
-
-    public static function makeKeyComponents($keyNode): array
-    {
-        return array_map(fn ($key) => $key['value'], $keyNode['keys']);
-    }
-
-    public static function makeKey($keyNode): string
-    {
-        return implode('.', self::makeKeyComponents($keyNode));
-    }
-
-    public static function makeHeaderFromArrayTable($arrayTable): string
-    {
-
-        $items = explode('.', $arrayTable);
-        $items = array_filter($items, fn ($item) => str_starts_with($item, '['));
-
-        return implode('.', $items);
     }
 
     /**
@@ -65,9 +43,9 @@ final class TomlKeystore
      */
     protected function addKeyValuePairNode($keyValuePairNode): void
     {
-        $table = end($this->tables);
         $key = '';
-        if ($table) {
+        if (count($this->tables)) {
+            $table = $this->tables[count($this->tables) - 1];
             $key .= "$table.";
         }
         $components = self::makeKeyComponents($keyValuePairNode['key']);
@@ -88,6 +66,26 @@ final class TomlKeystore
             }
         }
         $this->keysAdd($key);
+    }
+
+    protected function keysContains($key): bool
+    {
+        return in_array($key, $this->keys, true);
+    }
+
+    protected function implicitTablesAdd($key): void
+    {
+        $this->implicitTables[] = $key;
+    }
+
+    protected function implicitTablesContains($key): bool
+    {
+        return in_array($key, $this->implicitTables);
+    }
+
+    protected function keysAdd($key): void
+    {
+        $this->keys[] = $key;
     }
 
     /**
@@ -132,6 +130,15 @@ final class TomlKeystore
         $this->tables[] = $key;
     }
 
+    public static function makeHeaderFromArrayTable($arrayTable): string
+    {
+
+        $items = explode('.', $arrayTable);
+        $items = array_filter($items, fn ($item) => str_starts_with($item, '['));
+
+        return implode('.', $items);
+    }
+
     /**
      * @throws TomlError
      */
@@ -172,23 +179,13 @@ final class TomlKeystore
         $this->tables[] = $key;
     }
 
-    protected function keysContains($key): bool
+    public static function makeKey($keyNode): string
     {
-        return in_array($key, $this->keys);
+        return implode('.', self::makeKeyComponents($keyNode));
     }
 
-    protected function keysAdd($key): void
+    public static function makeKeyComponents($keyNode): array
     {
-        $this->keys[] = $key;
-    }
-
-    protected function implicitTablesContains($key): bool
-    {
-        return in_array($key, $this->implicitTables);
-    }
-
-    protected function implicitTablesAdd($key): void
-    {
-        $this->implicitTables[] = $key;
+        return array_map(fn ($key) => $key['value'], $keyNode['keys']);
     }
 }

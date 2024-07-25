@@ -2,6 +2,7 @@
 
 namespace Devium\Toml;
 
+use DateTime;
 use Throwable;
 
 /**
@@ -23,82 +24,6 @@ final class TomlParser
         $this->keystore = new TomlKeystore();
         $this->rootTableNode = ['type' => 'ROOT_TABLE', 'elements' => []];
         $this->tableNode = $this->rootTableNode;
-    }
-
-    /**
-     * @throws Throwable
-     */
-    public function digitalChecks($radix, $value): bool
-    {
-        if ($radix === 10) {
-            return TomlUtils::isDecimal($value);
-        }
-        if ($radix === 16) {
-            return TomlUtils::isHexadecimal($value);
-        }
-        if ($radix === 8) {
-            return TomlUtils::isOctal($value);
-        }
-        if ($radix === 2) {
-            return TomlUtils::isBinary($value);
-        }
-
-        throw new TomlError('digitalChecks radix problem');
-    }
-
-    /**
-     * @throws TomlError
-     */
-    public function parseDate($value): TomlLocalDateTime
-    {
-        try {
-            return TomlLocalDateTime::fromString($value);
-        } catch (Throwable) {
-            throw new TomlError();
-        }
-    }
-
-    /**
-     * @throws Throwable
-     */
-    public function parseInteger($value, $isSignAllowed, $areLeadingZerosAllowed, $isUnparsedAllowed, $radix): array
-    {
-        $i = 0;
-        if ($value[$i] === '+' || $value[$i] === '-') {
-            if (! $isSignAllowed) {
-                throw new TomlError();
-            }
-            $i++;
-        }
-        if (! $areLeadingZerosAllowed && $value[$i] === '0' && $i + 1 !== strlen($value)) {
-            throw new TomlError();
-        }
-        $isUnderscoreAllowed = false;
-        for (; $i < strlen($value); $i++) {
-            $char = $value[$i];
-            if ($char === '_') {
-                if (! $isUnderscoreAllowed) {
-                    throw new TomlError();
-                }
-                $isUnderscoreAllowed = false;
-
-                continue;
-            }
-            if (! $this->digitalChecks($radix, $char)) {
-                break;
-            }
-            $isUnderscoreAllowed = true;
-        }
-        if (! $isUnderscoreAllowed) {
-            throw new TomlError();
-        }
-        $int = str_replace('_', '', substr($value, $i));
-        $unparsed = substr($value, $i);
-        if (! $isUnparsedAllowed && $unparsed !== '') {
-            throw new TomlError();
-        }
-
-        return ['int' => $int, 'unparsed' => $unparsed];
     }
 
     /**
@@ -140,6 +65,24 @@ final class TomlParser
             'EOF' => null,
             default => $this->keyValuePair(),
         };
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function takeCommentsAndNewlines(): void
+    {
+        for (; ;) {
+            $this->tokenizer->take('WHITESPACE');
+            if ($this->tokenizer->take('COMMENT')) {
+                $this->tokenizer->assert('NEWLINE');
+
+                continue;
+            }
+            if (! $this->tokenizer->take('NEWLINE')) {
+                break;
+            }
+        }
     }
 
     /**
@@ -207,8 +150,7 @@ final class TomlParser
         $token = $this->tokenizer->next();
 
         return match ($token['type']) {
-            'STRING' => [
-                'type' => 'STRING', 'value' => $token['value']],
+            'STRING' => ['type' => 'STRING', 'value' => $token['value']],
             'BARE' => $this->booleanOrNumberOrDateOrDateTimeOrTime($token['value']),
             'PLUS' => $this->plus(),
             'LEFT_SQUARE_BRACKET' => $this->array(),
@@ -273,7 +215,7 @@ final class TomlParser
                     'type' => 'OFFSET_DATE_TIME', 'value' => $this->parseDate($value),
                 ];
         }
-        if (str_contains($tokens[count($tokens - 1)]['value'], '-')) {
+        if (str_contains($tokens[count($tokens) - 1]['value'], '-')) {
             $this->tokenizer->assert('COLON');
             $token = $this->tokenizer->expect('BARE');
             $value .= ':';
@@ -333,6 +275,18 @@ final class TomlParser
     }
 
     /**
+     * @throws TomlError
+     */
+    public function parseDate($value): DateTime
+    {
+        try {
+            return new DateTime($value);
+        } catch (Throwable) {
+            throw new TomlError();
+        }
+    }
+
+    /**
      * @throws Throwable
      */
     public function time($value): array
@@ -349,16 +303,6 @@ final class TomlParser
 
         return [
             'type' => 'LOCAL_TIME', 'value' => TomlLocalTime::fromString($value)];
-    }
-
-    /**
-     * @throws Throwable
-     */
-    public function plus(): array
-    {
-        $token = $this->tokenizer->expect('BARE');
-
-        return $this->number("+{$token['value']}");
     }
 
     /**
@@ -413,9 +357,75 @@ final class TomlParser
     /**
      * @throws Throwable
      */
+    public function parseInteger($value, $isSignAllowed, $areLeadingZerosAllowed, $isUnparsedAllowed, $radix): array
+    {
+        $i = 0;
+        if ($value[$i] === '+' || $value[$i] === '-') {
+            if (! $isSignAllowed) {
+                throw new TomlError();
+            }
+            $i++;
+        }
+        if (! $areLeadingZerosAllowed && $value[$i] === '0' && $i + 1 !== strlen($value)) {
+            throw new TomlError();
+        }
+        $isUnderscoreAllowed = false;
+        for (; $i < strlen($value); $i++) {
+            $char = $value[$i];
+            if ($char === '_') {
+                if (! $isUnderscoreAllowed) {
+                    throw new TomlError();
+                }
+                $isUnderscoreAllowed = false;
+
+                continue;
+            }
+            if (! $this->digitalChecks($radix, $char)) {
+                break;
+            }
+            $isUnderscoreAllowed = true;
+        }
+        if (! $isUnderscoreAllowed) {
+            throw new TomlError();
+        }
+        $int = str_replace('_', '', substr($value, $i));
+        $unparsed = substr($value, $i);
+        if (! $isUnparsedAllowed && $unparsed !== '') {
+            throw new TomlError();
+        }
+
+        return ['int' => $int, 'unparsed' => $unparsed];
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function digitalChecks($radix, $value): bool
+    {
+        if ($radix === 10) {
+            return TomlUtils::isDecimal($value);
+        }
+        if ($radix === 16) {
+            return TomlUtils::isHexadecimal($value);
+        }
+        if ($radix === 8) {
+            return TomlUtils::isOctal($value);
+        }
+        if ($radix === 2) {
+            return TomlUtils::isBinary($value);
+        }
+
+        throw new TomlError('digitalChecks radix problem');
+    }
+
+    /**
+     * @throws Throwable
+     */
     public function float($value): array
     {
-        [$float, $unparsed] = $this->parseInteger($value, true, false, true, 10);
+        $parsed = $this->parseInteger($value, true, false, true, 10);
+        $float = $parsed['int'];
+        $unparsed = $parsed['unparsed'];
         if ($this->tokenizer->take('PERIOD')) {
             if ($unparsed !== '') {
                 throw new TomlError();
@@ -441,6 +451,16 @@ final class TomlParser
 
         return [
             'type' => 'FLOAT', 'value' => (float) $float];
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function plus(): array
+    {
+        $token = $this->tokenizer->expect('BARE');
+
+        return $this->number("+{$token['value']}");
     }
 
     /**
@@ -492,23 +512,5 @@ final class TomlParser
         }
 
         return $inlineTableNode;
-    }
-
-    /**
-     * @throws Throwable
-     */
-    public function takeCommentsAndNewlines(): void
-    {
-        for (; ;) {
-            $this->tokenizer->take('WHITESPACE');
-            if ($this->tokenizer->take('COMMENT')) {
-                $this->tokenizer->assert('NEWLINE');
-
-                continue;
-            }
-            if (! $this->tokenizer->take('NEWLINE')) {
-                break;
-            }
-        }
     }
 }
