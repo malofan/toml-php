@@ -2,9 +2,6 @@
 
 namespace Devium\Toml;
 
-/**
- * @internal
- */
 final class TomlLocalTime extends TomlDateTimeUtils
 {
     public $hour;

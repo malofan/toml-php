@@ -158,7 +158,8 @@ final class TomlTokenizer
 
     public function scanComment($start): TomlToken
     {
-        for (; ;) {
+        while (! $this->iterator->isEOF()) {
+
             $char = $this->iterator->peek();
             if (! $this->isControlCharacterOtherThanTab($char)) {
                 $this->iterator->next();
@@ -168,6 +169,8 @@ final class TomlTokenizer
 
             return $this->returnScan('COMMENT', $start);
         }
+
+        return $this->returnScan('COMMENT', $start);
     }
 
     public function isControlCharacterOtherThanTab($char): bool
@@ -335,5 +338,10 @@ final class TomlTokenizer
         }
 
         return $token;
+    }
+
+    public function isEOF(): bool
+    {
+        return $this->iterator->isEOF();
     }
 }

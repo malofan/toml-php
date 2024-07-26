@@ -2,9 +2,6 @@
 
 namespace Devium\Toml;
 
-/**
- * @internal
- */
 final class TomlLocalDate extends TomlDateTimeUtils
 {
     public $year;
@@ -34,5 +31,10 @@ final class TomlLocalDate extends TomlDateTimeUtils
         }
 
         return new self($year, $month, $day);
+    }
+
+    public function __toString(): string
+    {
+        return "$this->year-$this->month-$this->day";
     }
 }

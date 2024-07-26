@@ -4,6 +4,7 @@
 
 use Devium\Toml\TomlDateTime;
 use Devium\Toml\TomlDecoder;
+use Devium\Toml\TomlLocalDate;
 
 include_once './vendor/autoload.php';
 
@@ -39,7 +40,15 @@ function tagObject(mixed $obj)
         return ['type' => 'datetime', 'value' => (string) $obj];
     }
 
+    if ($obj instanceof TomlLocalDate) {
+        return ['type' => 'date-local', 'value' => (string) $obj];
+    }
+
     if (is_array($obj)) {
+        if (! $obj) {
+            return new stdClass();
+        }
+
         return array_map(fn ($item) => tagObject($item), $obj);
     }
 
@@ -54,8 +63,9 @@ function tagObject(mixed $obj)
 $decode = new TomlDecoder();
 
 try {
-    echo json_encode(tagObject($decode->decode(file_get_contents('php://stdin'))));
+    $parsed = tagObject($decode->decode(file_get_contents('php://stdin')));
+    echo json_encode(is_array($parsed) && ! $parsed ? new stdClass() : $parsed);
     exit(0);
 } catch (Throwable $e) {
-    exit(1);
+    exit($e->getMessage()."\n".$e->getTraceAsString());
 }

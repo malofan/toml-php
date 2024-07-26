@@ -54,4 +54,9 @@ final class TomlInputIterator
 
         return $char;
     }
+
+    public function isEOF(): bool
+    {
+        return $this->pos + 1 === strlen($this->input);
+    }
 }

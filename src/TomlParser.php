@@ -75,6 +75,9 @@ final class TomlParser
         for (; ;) {
             $this->tokenizer->take('WHITESPACE');
             if ($this->tokenizer->take('COMMENT')) {
+                if ($this->tokenizer->isEOF()) {
+                    break;
+                }
                 $this->tokenizer->assert('NEWLINE');
 
                 continue;
@@ -125,7 +128,7 @@ final class TomlParser
                     ]);
                     break;
                 case 'STRING':
-                    if ($token['isMultiline']) {
+                    if ($token->isMultiline) {
                         throw new TomlError();
                     }
                     $keyNode->keys[] = TomlToken::fromArray([

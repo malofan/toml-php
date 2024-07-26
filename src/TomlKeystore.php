@@ -123,6 +123,9 @@ final class TomlKeystore
             if ($i === 0) {
                 $key .= $component;
             } else {
+                if (str_contains($component, '.')) {
+                    $key .= '.';
+                }
                 $key .= ".$component";
             }
             if ($this->keysContains($key)) {
