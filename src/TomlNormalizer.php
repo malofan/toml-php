@@ -7,39 +7,39 @@ namespace Devium\Toml;
  */
 final class TomlNormalizer
 {
-    public static function normalize($node)
+    /**
+     * @throws TomlError
+     */
+    public static function normalize(TomlToken $node): mixed
     {
-        switch ($node['type']) {
+        switch ($node->type) {
+            case 'INLINE_TABLE':
             case 'ROOT_TABLE':
-                $elements = self::mapNormalize($node['elements']);
+                $elements = self::mapNormalize($node->elements);
 
                 return self::merge(...$elements);
             case 'KEY':
-                return self::mapNormalize($node['keys']);
+                return self::mapNormalize($node->keys);
             case 'KEY_VALUE_PAIR':
 
-                $key = self::normalize($node['key']);
-                $value = self::normalize($node['value']);
+                $key = self::normalize($node->key);
+                $value = self::normalize($node->value);
 
                 return self::objectify($key, $value);
             case 'TABLE':
 
-                $key = self::normalize($node['key']);
-                $elements = self::mapNormalize($node['elements']);
+                $key = self::normalize($node->key);
+                $elements = self::mapNormalize($node->elements);
 
                 return self::objectify($key, self::merge(...$elements));
             case 'ARRAY_TABLE':
 
-                $key = self::normalize($node['key']);
-                $elements = self::mapNormalize($node['elements']);
+                $key = self::normalize($node->key);
+                $elements = self::mapNormalize($node->elements);
 
                 return self::objectify($key, [self::merge(...$elements)]);
-            case 'INLINE_TABLE':
-                $elements = self::mapNormalize($node['elements']);
-
-                return self::merge(...$elements);
             case 'ARRAY':
-                return self::mapNormalize($node['elements']);
+                return self::mapNormalize($node->elements);
             case 'BARE':
             case 'STRING':
             case 'INTEGER':
@@ -49,10 +49,15 @@ final class TomlNormalizer
             case 'LOCAL_DATE_TIME':
             case 'LOCAL_DATE':
             case 'LOCAL_TIME':
-                return $node['value'];
+                return $node->value;
         }
+
+        throw new TomlError('unsupported type: '.$node->type);
     }
 
+    /**
+     * @throws TomlError
+     */
     public static function mapNormalize(array $items): array
     {
         return array_map(function ($element) {
@@ -60,10 +65,13 @@ final class TomlNormalizer
         }, $items);
     }
 
+    /**
+     * @throws TomlError
+     */
     public static function merge(...$values)
     {
         return array_reduce($values, function ($acc, $value) {
-            foreach (($value ?: []) as $key => $nextValue) {
+            foreach ($value as $key => $nextValue) {
                 $prevValue = $acc[$key] ?? null;
                 if (is_array($prevValue) && is_array($nextValue)) {
                     $acc[$key] = array_merge($prevValue, $nextValue);

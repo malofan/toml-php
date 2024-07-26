@@ -2,8 +2,6 @@
 
 namespace Devium\Toml;
 
-use Throwable;
-
 final class TomlTokenizer
 {
     public const PUNCTUATOR_OR_NEWLINE_TOKENS = [
@@ -40,7 +38,7 @@ final class TomlTokenizer
     }
 
     /**
-     * @throws Throwable
+     * @throws TomlError
      */
     public function assert(...$types): void
     {
@@ -50,12 +48,12 @@ final class TomlTokenizer
     }
 
     /**
-     * @throws Throwable
+     * @throws TomlError
      */
     public function take(...$types): bool
     {
         $token = $this->peek();
-        if (in_array($token['type'], $types, true)) {
+        if (in_array($token->type, $types, true)) {
             $this->next();
 
             return true;
@@ -65,9 +63,9 @@ final class TomlTokenizer
     }
 
     /**
-     * @throws Throwable
+     * @throws TomlError
      */
-    public function peek(): array
+    public function peek(): TomlToken
     {
         $pos = $this->iterator->pos;
         try {
@@ -75,24 +73,24 @@ final class TomlTokenizer
             $this->iterator->pos = $pos;
 
             return $token;
-        } catch (Throwable $e) {
+        } catch (TomlError $e) {
             $this->iterator->pos = $pos;
             throw $e;
         }
     }
 
     /**
-     * @throws Throwable
+     * @throws TomlError
      */
-    public function next(): array
+    public function next(): TomlToken
     {
         $char = $this->iterator->next();
         $start = $this->iterator->pos;
         if ($this->isPunctuatorOrNewline($char)) {
-            return [
+            return TomlToken::fromArray([
                 'type' => self::PUNCTUATOR_OR_NEWLINE_TOKENS[$char],
                 'value' => $char,
-            ];
+            ]);
         }
         if ($this->isBare($char)) {
             return $this->scanBare($start);
@@ -108,7 +106,7 @@ final class TomlTokenizer
             case '"':
                 return $this->scanBasicString();
             case '-1':
-                return ['type' => 'EOF'];
+                return TomlToken::fromArray(['type' => 'EOF']);
         }
         throw new TomlError();
     }
@@ -127,7 +125,7 @@ final class TomlTokenizer
             $char === '_';
     }
 
-    public function scanBare($start): array
+    public function scanBare($start): TomlToken
     {
         while ($this->isBare($this->iterator->peek())) {
             $this->iterator->next();
@@ -136,19 +134,15 @@ final class TomlTokenizer
         return $this->returnScan('BARE', $start);
     }
 
-    public function returnScan(string $type, $start): array
+    public function returnScan(string $type, $start): TomlToken
     {
-        return ['type' => $type, 'value' => $this->stringSlice($this->input, $start, $this->iterator->pos + 1)];
+        return TomlToken::fromArray([
+            'type' => $type,
+            'value' => TomlUtils::stringSlice($this->input, $start, $this->iterator->pos + 1),
+        ]);
     }
 
-    public function stringSlice($str, $start, $end): string
-    {
-        $end = $end - $start;
-
-        return substr($str, $start, $end);
-    }
-
-    public function scanWhitespace($start): array
+    public function scanWhitespace($start): TomlToken
     {
         while ($this->isWhitespace($this->iterator->peek())) {
             $this->iterator->next();
@@ -162,7 +156,7 @@ final class TomlTokenizer
         return $char === ' ' || $char === "\t";
     }
 
-    public function scanComment($start): array
+    public function scanComment($start): TomlToken
     {
         for (; ;) {
             $char = $this->iterator->peek();
@@ -187,9 +181,9 @@ final class TomlTokenizer
     }
 
     /**
-     * @throws Throwable
+     * @throws TomlError
      */
-    public function scanLiteralString(): array
+    public function scanLiteralString(): TomlToken
     {
         return $this->scanString("'");
     }
@@ -197,12 +191,16 @@ final class TomlTokenizer
     /**
      * @throws TomlError
      */
-    public function scanString($delimiter): array
+    public function scanString($delimiter): TomlToken
     {
         $isMultiline = false;
         if ($this->iterator->take($delimiter)) {
             if (! $this->iterator->take($delimiter)) {
-                return ['type' => 'STRING', 'value' => '', 'isMultiline' => false];
+                return TomlToken::fromArray([
+                    'type' => 'STRING',
+                    'value' => '',
+                    'isMultiline' => false,
+                ]);
             }
             $isMultiline = true;
         }
@@ -241,8 +239,6 @@ final class TomlTokenizer
                         }
                     }
                     break;
-                    /* @todo case undefined:
-                     * throw new TomlError();*/
                 default:
                     if ($this->isControlCharacterOtherThanTab($char)) {
                         throw new TomlError();
@@ -295,11 +291,11 @@ final class TomlTokenizer
             break;
         }
 
-        return [
+        return TomlToken::fromArray([
             'type' => 'STRING',
             'value' => $value,
             'isMultiline' => $isMultiline,
-        ];
+        ]);
     }
 
     public function isEscaped($char): bool
@@ -313,15 +309,15 @@ final class TomlTokenizer
     }
 
     /**
-     * @throws Throwable
+     * @throws TomlError
      */
-    public function scanBasicString(): array
+    public function scanBasicString(): TomlToken
     {
         return $this->scanString('"');
     }
 
     /**
-     * @throws Throwable
+     * @throws TomlError
      */
     public function sequence(...$types): array
     {
@@ -329,12 +325,12 @@ final class TomlTokenizer
     }
 
     /**
-     * @throws Throwable
+     * @throws TomlError
      */
-    public function expect($type): array
+    public function expect($type): TomlToken
     {
         $token = $this->next();
-        if ($token['type'] !== $type) {
+        if ($token->type !== $type) {
             throw new TomlError();
         }
 

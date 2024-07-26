@@ -4,9 +4,6 @@ namespace Devium\Toml;
 
 use Exception;
 
-/**
- * @internal
- */
 final class TomlError extends Exception
 {
     public mixed $tomlLine;
@@ -15,8 +12,13 @@ final class TomlError extends Exception
 
     public string $tomlCodeBlock;
 
-    public function __construct(string $message = '', array $options = ['toml' => '', 'ptr' => 0])
-    {
+    public function __construct(
+        string $message = '',
+        array $options = [
+            'toml' => '',
+            'ptr' => 0,
+        ],
+    ) {
         [$line, $column] = $this->getLineColFromPtr($options['toml'], $options['ptr']);
         $codeBlock = $this->makeCodeBlock($options['toml'], $line, $column);
 

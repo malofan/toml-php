@@ -27,8 +27,12 @@ final class TomlUtils
         return $char === '0' || $char === '1';
     }
 
-    public static function stringSlice($str, $start, $end): string
+    public static function stringSlice(string $str, int $start, int $end = 0): string
     {
+        if ($end === 0) {
+            return substr($str, $start);
+        }
+
         $end = $end - $start;
 
         return substr($str, $start, $end);

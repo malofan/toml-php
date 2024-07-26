@@ -9,10 +9,10 @@ it('can iterate TOML string', function () {
     $string = '';
 
     while ($c = $tokenizer->next()) {
-        if ($c['type'] === 'EOF') {
+        if ($c->type === 'EOF') {
             break;
         }
-        $string .= $c['value'];
+        $string .= $c->value;
     }
 
     expect($string)->toBe('title = TOML Example');

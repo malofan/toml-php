@@ -23,9 +23,9 @@ final class TomlKeystore
     /**
      * @throws TomlError
      */
-    public function addNode($node): void
+    public function addNode(TomlToken $node): void
     {
-        switch ($node['type']) {
+        switch ($node->type) {
             case 'KEY_VALUE_PAIR':
                 $this->addKeyValuePairNode($node);
                 break;
@@ -41,14 +41,14 @@ final class TomlKeystore
     /**
      * @throws TomlError
      */
-    protected function addKeyValuePairNode($keyValuePairNode): void
+    protected function addKeyValuePairNode(TomlToken $keyValuePairNode): void
     {
         $key = '';
         if (count($this->tables)) {
             $table = $this->tables[count($this->tables) - 1];
             $key .= "$table.";
         }
-        $components = self::makeKeyComponents($keyValuePairNode['key']);
+        $components = self::makeKeyComponents($keyValuePairNode->key);
         for ($i = 0; $i < count($components); $i++) {
             $component = $components[$i];
             if ($i === 0) {
@@ -66,6 +66,11 @@ final class TomlKeystore
             }
         }
         $this->keysAdd($key);
+    }
+
+    public static function makeKeyComponents(TomlToken $keyNode): array
+    {
+        return array_map(fn (TomlToken $key) => $key->value, $keyNode->keys);
     }
 
     protected function keysContains($key): bool
@@ -91,9 +96,9 @@ final class TomlKeystore
     /**
      * @throws TomlError
      */
-    protected function addTableNode($tableNode): void
+    protected function addTableNode(TomlToken $tableNode): void
     {
-        $components = self::makeKeyComponents($tableNode['key']);
+        $components = self::makeKeyComponents($tableNode->key);
         $header = implode('.', $components);
         $arrayTable = array_reverse($this->arrayTables);
         $foundArrayTable = null;
@@ -142,9 +147,9 @@ final class TomlKeystore
     /**
      * @throws TomlError
      */
-    protected function addArrayTableNode($arrayTableNode): void
+    protected function addArrayTableNode(TomlToken $arrayTableNode): void
     {
-        $header = self::makeKey($arrayTableNode['key']);
+        $header = self::makeKey($arrayTableNode->key);
         if ($this->keysContains($header)) {
             throw new TomlError();
         }
@@ -182,10 +187,5 @@ final class TomlKeystore
     public static function makeKey($keyNode): string
     {
         return implode('.', self::makeKeyComponents($keyNode));
-    }
-
-    public static function makeKeyComponents($keyNode): array
-    {
-        return array_map(fn ($key) => $key['value'], $keyNode['keys']);
     }
 }
