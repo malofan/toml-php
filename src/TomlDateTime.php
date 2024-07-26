@@ -2,35 +2,22 @@
 
 namespace Devium\Toml;
 
-abstract class TomlDateTime
+use DateTime;
+use DateTimeZone;
+
+class TomlDateTime
 {
-    public static function isYear($value): bool
+    protected DateTime $dt;
+
+    public function __construct(string $dateTimeString)
     {
-        return $value >= 0 && $value <= 9999;
+        $this->dt = new DateTime($dateTimeString);
     }
 
-    public static function isMonth($value): bool
+    public function __toString(): string
     {
-        return $value > 0 && $value <= 12;
-    }
-
-    public static function isDay($value): bool
-    {
-        return $value > 0 && $value <= 31;
-    }
-
-    public static function isHour($value): bool
-    {
-        return $value >= 0 && $value < 24;
-    }
-
-    public static function isMinute($value): bool
-    {
-        return $value >= 0 && $value < 60;
-    }
-
-    public static function isSecond($value): bool
-    {
-        return $value >= 0 && $value < 60;
+        return $this->dt
+            ->setTimezone(new DateTimeZone('UTC'))
+            ->format('Y-m-d\TH:i:s.000p');
     }
 }

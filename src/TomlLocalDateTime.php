@@ -5,7 +5,7 @@ namespace Devium\Toml;
 /**
  * @internal
  */
-final class TomlLocalDateTime extends TomlDateTime
+final class TomlLocalDateTime extends TomlDateTimeUtils
 {
     public $year;
 

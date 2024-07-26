@@ -2,8 +2,6 @@
 
 namespace Devium\Toml;
 
-use DateTime;
-use DateTimeZone;
 use Throwable;
 
 final class TomlParser
@@ -305,12 +303,10 @@ final class TomlParser
     /**
      * @throws TomlError
      */
-    public function parseDate($value): string
+    public function parseDate($value): TomlDateTime
     {
         try {
-            return (new DateTime($value))
-                ->setTimezone(new DateTimeZone('UTC'))
-                ->format('Y-m-d\TH:i:s.000p');
+            return new TomlDateTime($value);
         } catch (Throwable) {
             throw new TomlError();
         }
@@ -384,9 +380,8 @@ final class TomlParser
         $int = $this->parseInteger($value, $isSignAllowed, $areLeadingZerosAllowed, false, $radix)['int'];
 
         return TomlToken::fromArray([
-            'type' => 'INTEGER', 'value' => $int,
+            'type' => 'INTEGER', 'value' => +$int,
         ]);
-        /** @todo bigint */
     }
 
     /**
