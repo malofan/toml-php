@@ -361,13 +361,13 @@ final class TomlParser
                 ]);
         }
         if (str_starts_with($value, '0x')) {
-            return $this->integer(substr($value, 2), 16);
+            return $this->integer($value, 16);
         }
         if (str_starts_with($value, '0o')) {
-            return $this->integer(substr($value, 2), 8);
+            return $this->integer($value, 8);
         }
         if (str_starts_with($value, '0b')) {
-            return $this->integer(substr($value, 2), 2);
+            return $this->integer($value, 2);
         }
         if (str_contains($value, 'e') || str_contains($value, 'E') || $this->tokenizer->peek()->type === 'PERIOD') {
             return $this->float($value);
@@ -386,7 +386,7 @@ final class TomlParser
         $int = $this->parseInteger($value, $isSignAllowed, $areLeadingZerosAllowed, false, $radix)['int'];
 
         return TomlToken::fromArray([
-            'type' => 'INTEGER', 'value' => +$int,
+            'type' => 'INTEGER', 'value' => $int,
         ]);
     }
 
@@ -416,9 +416,12 @@ final class TomlParser
 
                 continue;
             }
-            if (! $this->digitalChecks($radix, $char)) {
-                break;
+            if (! ($i === 1 && (($radix === 8 && $char === 'o') || ($radix === 2 && $char === 'b')))) {
+                if (! $this->digitalChecks($radix, $char)) {
+                    break;
+                }
             }
+
             $isUnderscoreAllowed = true;
         }
         if (! $isUnderscoreAllowed) {
@@ -430,7 +433,10 @@ final class TomlParser
             throw new TomlError();
         }
 
-        return ['int' => $int, 'unparsed' => $unparsed];
+        return [
+            'int' => intval(str_replace('0o', '0', $int), 0),
+            'unparsed' => $unparsed,
+        ];
     }
 
     /**
@@ -477,7 +483,7 @@ final class TomlParser
                 $this->tokenizer->assert('PLUS');
                 $token = $this->tokenizer->expect('BARE');
                 $float .= '+';
-                $float += $this->parseInteger($token->value, false, true, false, 10)['int'];
+                $float .= $this->parseInteger($token->value, false, true, false, 10)['int'];
             } else {
                 $float .= $this->parseInteger(substr($unparsed, 1), true, true, false, 10)['int'];
             }

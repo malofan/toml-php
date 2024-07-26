@@ -308,6 +308,10 @@ final class TomlTokenizer
 
     public function isUnicodeCharacter($char): bool
     {
+        if ($char === false) {
+            return false;
+        }
+
         return $char <= "\u{10ffff}";
     }
 
