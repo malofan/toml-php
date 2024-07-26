@@ -232,7 +232,10 @@ final class TomlParser
         $value .= implode('', array_map(function (TomlToken $token) {
             return $token->value;
         }, $tokens));
-        if (str_ends_with($tokens[count($tokens) - 1]->value, 'Z')) {
+        if (
+            str_ends_with($tokens[count($tokens) - 1]->value, 'Z') ||
+            str_ends_with($tokens[count($tokens) - 1]->value, 'z')
+        ) {
             return
                 TomlToken::fromArray([
                     'type' => 'OFFSET_DATE_TIME', 'value' => $this->parseDate($value),

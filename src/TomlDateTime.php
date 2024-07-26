@@ -11,6 +11,9 @@ class TomlDateTime
 
     public function __construct(string $dateTimeString)
     {
+        if (! preg_match('/(\d{4})(-(0[1-9]|1[0-2])(-([12]\d|0[1-9]|3[01]))([Tt\s]((([01]\d|2[0-3])((:)[0-5]\d))(:\d+)?)?(:[0-5]\d([.]\d+)?)?([zZ]|([+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)$/', $dateTimeString)) {
+            throw new TomlError('datetime format must have leading zero');
+        }
         $this->dt = new DateTime($dateTimeString);
     }
 

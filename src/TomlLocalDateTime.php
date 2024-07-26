@@ -40,4 +40,9 @@ final class TomlLocalDateTime extends TomlDateTimeUtils
 
         return new self($date->year, $date->month, $date->day, $time->hour, $time->minute, $time->second, $time->millisecond);
     }
+
+    public function __toString(): string
+    {
+        return "$this->year-$this->month-$this->day\T$this->hour-$this->minute-$this->second".($this->millisecond ? '.'.$this->millisecond : '');
+    }
 }
