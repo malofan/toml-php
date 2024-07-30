@@ -49,7 +49,7 @@ final class TomlError extends Exception
                 continue;
             }
 
-            $codeBlock .= str_pad($i, $numberLen, ' ');
+            $codeBlock .= str_pad($i, $numberLen);
             $codeBlock .= ':  ';
             $codeBlock .= $l;
             $codeBlock .= "\n";

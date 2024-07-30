@@ -26,6 +26,26 @@ role = "frontend"
 [servers.beta]
 ip = "10.0.0.2"
 role = "backend"
+
+[[fruits]]
+name = "apple"
+
+[fruits.physical]  # subtable
+color = "red"
+shape = "round"
+
+[[fruits.varieties]]  # nested array of tables
+name = "red delicious"
+
+[[fruits.varieties]]
+name = "granny smith"
+
+
+[[fruits]]
+name = "banana"
+
+[[fruits.varieties]]
+name = "plantain"
 TOML;
 
 $json = <<<'JSON'
@@ -65,7 +85,26 @@ $json = <<<'JSON'
       "ip": "10.0.0.2",
       "role": "backend"
     }
-  }
+  },
+  "fruits": [
+    {
+      "name": "apple",
+      "physical": {
+        "color": "red",
+        "shape": "round"
+      },
+      "varieties": [
+        { "name": "red delicious" },
+        { "name": "granny smith" }
+      ]
+    },
+    {
+      "name": "banana",
+      "varieties": [
+        { "name": "plantain" }
+      ]
+    }
+  ]
 }
 JSON;
 

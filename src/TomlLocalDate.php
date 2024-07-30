@@ -2,20 +2,13 @@
 
 namespace Devium\Toml;
 
-final class TomlLocalDate extends TomlDateTimeUtils
+final class TomlLocalDate extends AbstractTomlDateTime
 {
-    public $year;
-
-    public $month;
-
-    public $day;
-
-    public function __construct($year, $month, $day)
-    {
-        $this->year = $year;
-        $this->month = $month;
-        $this->day = $day;
-    }
+    public function __construct(
+        public readonly int $year,
+        public readonly int $month,
+        public readonly int $day,
+    ) {}
 
     /**
      * @throws TomlError
@@ -25,7 +18,9 @@ final class TomlLocalDate extends TomlDateTimeUtils
         if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
             throw new TomlError("invalid local date format \"$value\"");
         }
+
         [$year, $month, $day] = array_map('intval', explode('-', $value));
+
         if (! self::isYear($year) || ! self::isMonth($month) || ! self::isDay($day)) {
             throw new TomlError("invalid local date format \"$value\"");
         }

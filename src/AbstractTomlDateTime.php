@@ -2,34 +2,34 @@
 
 namespace Devium\Toml;
 
-class TomlDateTimeUtils
+abstract class AbstractTomlDateTime
 {
-    public static function isYear($value): bool
+    protected static function isYear(int $value): bool
     {
         return $value >= 0 && $value <= 9999;
     }
 
-    public static function isMonth($value): bool
+    protected static function isMonth(int $value): bool
     {
         return $value > 0 && $value <= 12;
     }
 
-    public static function isDay($value): bool
+    protected static function isDay(int $value): bool
     {
         return $value > 0 && $value <= 31;
     }
 
-    public static function isHour($value): bool
+    protected static function isHour(int $value): bool
     {
         return $value >= 0 && $value < 24;
     }
 
-    public static function isMinute($value): bool
+    protected static function isMinute(int $value): bool
     {
         return $value >= 0 && $value < 60;
     }
 
-    public static function isSecond($value): bool
+    protected static function isSecond(int $value): bool
     {
         return $value >= 0 && $value < 60;
     }

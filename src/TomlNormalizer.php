@@ -2,6 +2,23 @@
 
 namespace Devium\Toml;
 
+use Devium\Toml\Nodes\ArrayNode;
+use Devium\Toml\Nodes\ArrayTableNode;
+use Devium\Toml\Nodes\BareNode;
+use Devium\Toml\Nodes\BooleanNode;
+use Devium\Toml\Nodes\FloatNode;
+use Devium\Toml\Nodes\InlineTableNode;
+use Devium\Toml\Nodes\IntegerNode;
+use Devium\Toml\Nodes\KeyNode;
+use Devium\Toml\Nodes\KeyValuePairNode;
+use Devium\Toml\Nodes\LocalDateNode;
+use Devium\Toml\Nodes\LocalDateTimeNode;
+use Devium\Toml\Nodes\LocalTimeNode;
+use Devium\Toml\Nodes\OffsetDateTimeNode;
+use Devium\Toml\Nodes\RootTableNode;
+use Devium\Toml\Nodes\StringNode;
+use Devium\Toml\Nodes\TableNode;
+
 /**
  * @internal
  */
@@ -10,49 +27,54 @@ final class TomlNormalizer
     /**
      * @throws TomlError
      */
-    public static function normalize(TomlToken $node): mixed
+    public static function normalize(Nodes\Node $node): mixed
     {
-        switch ($node->type) {
-            case 'INLINE_TABLE':
-            case 'ROOT_TABLE':
-                $elements = self::mapNormalize($node->elements);
+        switch ($node::class) {
+            case InlineTableNode::class:
+            case RootTableNode::class:
+                $elements = self::mapNormalize($node->elements());
 
                 return self::merge(...$elements);
-            case 'KEY':
-                return self::mapNormalize($node->keys);
-            case 'KEY_VALUE_PAIR':
+
+            case KeyNode::class:
+                return self::mapNormalize($node->keys());
+
+            case KeyValuePairNode::class:
 
                 $key = self::normalize($node->key);
                 $value = self::normalize($node->value);
 
                 return self::objectify($key, $value);
-            case 'TABLE':
 
+            case TableNode::class:
                 $key = self::normalize($node->key);
-                $elements = self::mapNormalize($node->elements);
+                $elements = self::mapNormalize($node->elements());
 
                 return self::objectify($key, self::merge(...$elements));
-            case 'ARRAY_TABLE':
 
+            case ArrayTableNode::class:
                 $key = self::normalize($node->key);
-                $elements = self::mapNormalize($node->elements);
+                $elements = self::mapNormalize($node->elements());
 
                 return self::objectify($key, [self::merge(...$elements)]);
-            case 'ARRAY':
-                return self::mapNormalize($node->elements);
-            case 'BARE':
-            case 'STRING':
-            case 'INTEGER':
-            case 'FLOAT':
-            case 'BOOLEAN':
-            case 'OFFSET_DATE_TIME':
-            case 'LOCAL_DATE_TIME':
-            case 'LOCAL_DATE':
-            case 'LOCAL_TIME':
-                return $node->value;
-        }
 
-        throw new TomlError('unsupported type: '.$node->type);
+            case ArrayNode::class:
+                return self::mapNormalize($node->elements());
+
+            case BareNode::class:
+            case StringNode::class:
+            case IntegerNode::class:
+            case FloatNode::class:
+            case BooleanNode::class:
+            case OffsetDateTimeNode::class:
+            case LocalDateTimeNode::class:
+            case LocalDateNode::class:
+            case LocalTimeNode::class:
+                return $node->value;
+
+            default:
+                throw new TomlError('unsupported type: '.$node::class);
+        }
     }
 
     /**
@@ -60,9 +82,7 @@ final class TomlNormalizer
      */
     public static function mapNormalize(array $items): array
     {
-        return array_map(function ($element) {
-            return self::normalize($element);
-        }, $items);
+        return array_map(fn ($element) => self::normalize($element), $items);
     }
 
     /**
@@ -73,8 +93,9 @@ final class TomlNormalizer
         return array_reduce($values, function ($acc, $value) {
             foreach ($value as $key => $nextValue) {
                 $prevValue = $acc[$key] ?? null;
+
                 if (is_array($prevValue) && is_array($nextValue)) {
-                    $acc[$key] = array_merge($prevValue, $nextValue);
+                    $acc[$key] = array_merge_recursive($prevValue, $nextValue);
                 } elseif (self::isKeyValuePair($prevValue) && self::isKeyValuePair($nextValue)) {
                     $acc[$key] = self::merge($prevValue, $nextValue);
                 } elseif (is_array($prevValue) &&
@@ -106,15 +127,21 @@ final class TomlNormalizer
         return true;
     }
 
-    public static function objectify($key, $value): array
+    /**
+     * @param  string[]  $keys
+     */
+    public static function objectify(array $keys, $value): array
     {
         $initialValue = [];
         $object = &$initialValue;
-        foreach (array_slice($key, 0, -1) as $prop) {
+
+        foreach (array_slice($keys, 0, -1) as $prop) {
             $object[$prop] = [];
             $object = &$object[$prop];
         }
-        $object[array_pop($key)] = $value;
+
+        $key = array_pop($keys);
+        $object[$key] = $value;
 
         return $initialValue;
     }
