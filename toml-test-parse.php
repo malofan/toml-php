@@ -77,5 +77,6 @@ try {
     echo json_encode(is_array($parsed) && ! $parsed ? new stdClass() : $parsed);
     exit(0);
 } catch (Throwable $e) {
+    //exit($e->getMessage()."\n".$e->getTraceAsString());
     exit(1);
 }
