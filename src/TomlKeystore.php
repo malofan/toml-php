@@ -209,14 +209,16 @@ final class TomlKeystore
             $key = "$foundArrayTable.";
         }
 
-        for ($i = 0; $i < count($components); $i++) {
-            $component = $components[$i];
+        $i = 0;
+        foreach ($components as $component) {
 
             if ($i === 0) {
                 $key .= $component;
             } else {
                 $key .= ".$component";
             }
+
+            $i++;
 
             if ($this->keysContains($key)) {
                 throw new TomlError();

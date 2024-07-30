@@ -2,6 +2,7 @@
 
 namespace Devium\Toml;
 
+use ArrayObject;
 use Devium\Toml\Nodes\ArrayNode;
 use Devium\Toml\Nodes\ArrayTableNode;
 use Devium\Toml\Nodes\BareNode;
@@ -90,58 +91,55 @@ final class TomlNormalizer
      */
     public static function merge(...$values)
     {
-        return array_reduce($values, function ($acc, $value) {
+        return array_reduce($values, function (ArrayObject $acc, $value) {
             foreach ($value as $key => $nextValue) {
-                $prevValue = $acc[$key] ?? null;
+
+                $prevValue = $acc->offsetExists($key) ? $acc->offsetGet($key) : null;
 
                 if (is_array($prevValue) && is_array($nextValue)) {
-                    $acc[$key] = array_merge_recursive($prevValue, $nextValue);
+                    $acc->{$key} = array_merge($prevValue, $nextValue);
                 } elseif (self::isKeyValuePair($prevValue) && self::isKeyValuePair($nextValue)) {
-                    $acc[$key] = self::merge($prevValue, $nextValue);
+                    $acc->{$key} = self::merge($prevValue, $nextValue);
                 } elseif (is_array($prevValue) &&
                     self::isKeyValuePair(end($prevValue)) &&
                     self::isKeyValuePair($nextValue)) {
                     $prevValueLastElement = end($prevValue);
-                    $acc[$key] = array_merge(array_slice($prevValue, 0, -1), [self::merge($prevValueLastElement, $nextValue)]);
+                    $acc->{$key} = array_merge(array_slice($prevValue, 0, -1), [self::merge($prevValueLastElement, $nextValue)]);
                 } elseif (isset($prevValue)) {
                     throw new TomlError();
                 } else {
-                    $acc[$key] = $nextValue;
+                    $acc->{$key} = $nextValue;
                 }
             }
 
             return $acc;
-        }, []);
+        }, new ArrayObject([], ArrayObject::ARRAY_AS_PROPS));
     }
 
     public static function isKeyValuePair($value): bool
     {
-        if ($value instanceof TomlLocalDateTime || $value instanceof TomlLocalDate || $value instanceof TomlLocalTime) {
+
+        if ($value instanceof TomlLocalDateTime || $value instanceof TomlLocalDate || $value instanceof TomlLocalTime || $value instanceof TomlDateTime) {
             return false;
         }
 
-        if (! is_array($value)) {
-            return false;
-        }
-
-        return true;
+        return is_object($value);
     }
 
     /**
      * @param  string[]  $keys
      */
-    public static function objectify(array $keys, $value): array
+    public static function objectify(array $keys, $value): ArrayObject
     {
-        $initialValue = [];
+        $initialValue = new ArrayObject([], ArrayObject::ARRAY_AS_PROPS);
         $object = &$initialValue;
-
         foreach (array_slice($keys, 0, -1) as $prop) {
-            $object[$prop] = [];
-            $object = &$object[$prop];
+            $object->{$prop} = new ArrayObject([], ArrayObject::ARRAY_AS_PROPS);
+            $object = &$object->{$prop};
         }
 
         $key = array_pop($keys);
-        $object[$key] = $value;
+        $object->{$key} = $value;
 
         return $initialValue;
     }

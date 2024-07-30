@@ -12,6 +12,10 @@ class TomlDecoder
         $parser = new TomlParser($input);
         $node = $parser->parse();
 
-        return TomlNormalizer::normalize($node);
+        return json_decode(
+            json_encode(
+                TomlNormalizer::normalize($node)
+            )
+        );
     }
 }
