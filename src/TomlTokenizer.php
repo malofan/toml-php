@@ -243,7 +243,7 @@ final class TomlTokenizer
                     }
                     break;
                 default:
-                    if ($this->isControlCharacterOtherThanTab($char)) {
+                    if ($this->iterator->isEOF() || $this->isControlCharacterOtherThanTab($char)) {
                         throw new TomlError();
                     }
                     switch ($delimiter) {
