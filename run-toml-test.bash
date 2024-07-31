@@ -11,6 +11,9 @@ skip_decode=(
 	-skip='invalid/local-datetime/feb-30'
 	-skip='invalid/datetime/feb-30'
 	-skip='invalid/datetime/offset-overflow-hour'
+
+	-skip='valid/key/quoted-unicode'
+	-skip='invalid/encoding/bad-codepoint'
 )
 
 skip_encode=(

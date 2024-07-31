@@ -33,6 +33,9 @@ final class TomlTokenizer
 
     public function __construct(string $input)
     {
+        if (preg_match('/"""\n?.*\\\\ /', $input) || preg_match('/\\\\ .*\n?"""/', $input)) {
+            throw new TomlError();
+        }
         $this->input = $input;
         $this->iterator = new TomlInputIterator($input);
     }
@@ -264,7 +267,7 @@ final class TomlTokenizer
                                     $codePoint = '';
                                     for ($i = 0; $i < $size; $i++) {
                                         $char = $this->iterator->next();
-                                        if ($char === '-1' || ! TomlUtils::isHexadecimal($char)) {
+                                        if ($char === '-1' || ! TomlUtils::isUnicode($char)) {
                                             throw new TomlError();
                                         }
                                         $codePoint .= $char;

@@ -17,6 +17,11 @@ final class TomlUtils
         return ($char >= 'A' && $char <= 'Z') || ($char >= 'a' && $char <= 'z') || ($char >= '0' && $char <= '9');
     }
 
+    public static function isUnicode($char): bool
+    {
+        return ($char >= 'A' && $char <= 'F') || ($char >= 'a' && $char <= 'f') || ($char >= '0' && $char <= '9');
+    }
+
     public static function isOctal($char): bool
     {
         return $char >= '0' && $char <= '7';

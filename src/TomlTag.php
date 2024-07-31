@@ -6,18 +6,18 @@ use stdClass;
 
 class TomlTag
 {
-    public static function tagObject(mixed $obj): mixed
+    public static function tagObject(mixed $obj): stdClass|array
     {
         if (is_int($obj)) {
             return ['type' => 'integer', 'value' => (string) $obj];
         }
 
         if (is_string($obj)) {
-            return ['type' => 'string', 'value' => $obj];
-        }
+            if (preg_match('/^[+-]?\d+[.]\d+$/', $obj)) {
+                return ['type' => 'float', 'value' => $obj];
+            }
 
-        if (is_bool($obj)) {
-            return ['type' => 'bool', 'value' => $obj ? 'true' : 'false'];
+            return ['type' => 'string', 'value' => $obj];
         }
 
         if (is_numeric($obj)) {
@@ -32,6 +32,10 @@ class TomlTag
             }
 
             return ['type' => 'float', 'value' => (string) $obj];
+        }
+
+        if (is_bool($obj)) {
+            return ['type' => 'bool', 'value' => $obj ? 'true' : 'false'];
         }
 
         if ($obj instanceof TomlDateTime) {

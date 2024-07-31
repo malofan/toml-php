@@ -370,17 +370,28 @@ final class TomlParser
     /**
      * @throws TomlError
      */
-    public function parseInteger($value, $isSignAllowed, $areLeadingZerosAllowed, $isUnparsedAllowed, $radix): array
-    {
+    public function parseInteger(
+        $value, $isSignAllowed, $areLeadingZerosAllowed, $isUnparsedAllowed, $radix, bool $asString = false
+    ): array {
+        $sign = '';
         $i = 0;
         if ($value[$i] === '+' || $value[$i] === '-') {
             if (! $isSignAllowed) {
                 throw new TomlError();
             }
+            $sign = $value[$i];
             $i++;
         }
 
         if (! $areLeadingZerosAllowed && $value[$i] === '0' && ($i + 1) !== strlen($value)) {
+            throw new TomlError();
+        }
+
+        if (preg_match('/[+-]?0[obx](_|$)/im', $value)) {
+            throw new TomlError();
+        }
+
+        if (str_starts_with($value, '0x') && ! preg_match('/^0[xX][0-9a-fA-F_]+$/', $value)) {
             throw new TomlError();
         }
 
@@ -416,9 +427,15 @@ final class TomlParser
             throw new TomlError();
         }
 
+        $int = str_replace('0o', '0', $int);
+        if (! $asString) {
+            $int = intval($int, 0);
+        }
+
         return [
-            'int' => intval(str_replace('0o', '0', $int), 0),
+            'int' => $int,
             'unparsed' => $unparsed,
+            'sign' => $sign,
         ];
     }
 
@@ -444,20 +461,28 @@ final class TomlParser
         $parsed = $this->parseInteger($value, true, true, true, 10);
         $float = $parsed['int'];
         $unparsed = $parsed['unparsed'];
+        $sign = $parsed['sign'];
 
         if ($this->tokenizer->take('PERIOD')) {
+            if (preg_match('/^[+-]?0\d+/im', $value)) {
+                throw new TomlError('');
+            }
+
             if ($unparsed !== '') {
                 throw new TomlError();
             }
 
             $token = $this->tokenizer->expect('BARE');
-            $result = $this->parseInteger($token->value, false, true, true, 10);
+            $result = $this->parseInteger($token->value, false, true, true, 10, true);
+            if (! (str_starts_with($float, '+') || str_starts_with($float, '-'))) {
+                $float = "$sign$float";
+            }
             $float .= ".{$result['int']}";
             $unparsed = $result['unparsed'];
         }
 
         if ($unparsed === '') {
-            return new FloatNode((float) $float);
+            return new FloatNode($float);
         }
 
         if (! str_starts_with($unparsed, 'e') && ! str_starts_with($unparsed, 'E')) {
