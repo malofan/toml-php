@@ -67,11 +67,12 @@ final class TomlNormalizer
             case IntegerNode::class:
             case FloatNode::class:
             case BooleanNode::class:
+                return $node->value;
             case OffsetDateTimeNode::class:
             case LocalDateTimeNode::class:
             case LocalDateNode::class:
             case LocalTimeNode::class:
-                return $node->value;
+                return (string) $node->value;
 
             default:
                 throw new TomlError('unsupported type: '.$node::class);
