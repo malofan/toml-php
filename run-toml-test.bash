@@ -38,6 +38,6 @@ e=0
 # -int-as-float as there is no way to distinguish between them at this time.
 # For the encoder, distinction is made between floats and integers using JS bigint, however
 # due to the lack of option to always serialize plain numbers as floats, some tests fail (and are therefore skipped)
-toml-test                         ${skip_decode[@]} ./toml-test-parse.php  || e=1
+toml-test                         "${skip_decode[@]}" ./toml-test-parse.php  || e=1
 #toml-test               -encoder ${skip_encode[@]} ./toml-test-encode.bash || e=1
 exit $e
