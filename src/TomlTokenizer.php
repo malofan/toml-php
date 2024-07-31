@@ -255,7 +255,7 @@ final class TomlTokenizer
                             if ($char === '\\') {
                                 $char = $this->iterator->next();
                                 if ($this->isEscaped($char)) {
-                                    $value .= self::ESCAPES[$char];
+                                    $value .= $char === 'b' ? chr(8) : self::ESCAPES[$char];
 
                                     continue 3;
                                 }
