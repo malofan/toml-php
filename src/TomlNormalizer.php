@@ -62,17 +62,16 @@ final class TomlNormalizer
             case ArrayNode::class:
                 return self::mapNormalize($node->elements());
 
+            case OffsetDateTimeNode::class:
+            case LocalDateTimeNode::class:
+            case LocalDateNode::class:
+            case LocalTimeNode::class:
             case BareNode::class:
             case StringNode::class:
             case IntegerNode::class:
             case FloatNode::class:
             case BooleanNode::class:
                 return $node->value;
-            case OffsetDateTimeNode::class:
-            case LocalDateTimeNode::class:
-            case LocalDateNode::class:
-            case LocalTimeNode::class:
-                return (string) $node->value;
 
             default:
                 throw new TomlError('unsupported type: '.$node::class);
@@ -90,7 +89,7 @@ final class TomlNormalizer
     /**
      * @throws TomlError
      */
-    public static function merge(...$values)
+    public static function merge(...$values): ArrayObject
     {
         return array_reduce($values, function (ArrayObject $acc, $value) {
             foreach ($value as $key => $nextValue) {
@@ -105,7 +104,10 @@ final class TomlNormalizer
                     self::isKeyValuePair(end($prevValue)) &&
                     self::isKeyValuePair($nextValue)) {
                     $prevValueLastElement = end($prevValue);
-                    $acc->{$key} = array_merge(array_slice($prevValue, 0, -1), [self::merge($prevValueLastElement, $nextValue)]);
+                    $acc->{$key} = array_merge(
+                        array_slice($prevValue, 0, -1),
+                        [self::merge($prevValueLastElement, $nextValue)]
+                    );
                 } elseif (isset($prevValue)) {
                     throw new TomlError();
                 } else {
@@ -120,7 +122,7 @@ final class TomlNormalizer
     public static function isKeyValuePair($value): bool
     {
 
-        if ($value instanceof TomlLocalDateTime || $value instanceof TomlLocalDate || $value instanceof TomlLocalTime || $value instanceof TomlDateTime) {
+        if ($value instanceof AbstractTomlDateTime) {
             return false;
         }
 

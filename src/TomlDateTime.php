@@ -6,7 +6,7 @@ use DateTime;
 use DateTimeZone;
 use Throwable;
 
-readonly class TomlDateTime
+class TomlDateTime extends AbstractTomlDateTime
 {
     public DateTime $dt;
 

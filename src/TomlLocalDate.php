@@ -30,6 +30,6 @@ final class TomlLocalDate extends AbstractTomlDateTime
 
     public function __toString(): string
     {
-        return "$this->year-$this->month-$this->day";
+        return "$this->year-{$this->zeroPad($this->month)}-{$this->zeroPad($this->day)}";
     }
 }

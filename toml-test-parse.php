@@ -55,16 +55,17 @@ function tagObject(mixed $obj)
     }
 
     if (is_array($obj)) {
-        if (! $obj) {
-            return new stdClass();
-        }
-
         return array_map(fn ($item) => tagObject($item), $obj);
     }
 
-    $tagged = [];
+    $tagged = new stdClass();
+
+    if ($obj instanceof stdClass) {
+        $obj = get_object_vars($obj);
+    }
+
     foreach ($obj as $key => $value) {
-        $tagged[$key] = tagObject($value);
+        $tagged->{$key} = tagObject($value);
     }
 
     return $tagged;

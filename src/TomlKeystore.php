@@ -11,9 +11,6 @@ use Devium\Toml\Nodes\TableNode;
 
 final class TomlKeystore
 {
-    /**
-     * @var array<string, true>
-     */
     private array $keys = [];
 
     /**
@@ -21,72 +18,12 @@ final class TomlKeystore
      */
     private array $tables = [];
 
-    /**
-     * @var array<string, true>
-     */
     private array $implicitTables = [];
 
     /**
      * @var string[]
      */
     private array $arrayTables = [];
-
-    /**
-     * <code>
-     * [[fruits]]
-     * name = "apple"
-     *
-     * [fruits.physical]  # subtable
-     * color = "red"
-     * shape = "round"
-     *
-     * [[fruits.varieties]]  # nested array of tables
-     * name = "red delicious"
-     *
-     * [[fruits.varieties]]
-     * name = "granny smith"
-     *
-     *
-     * [[fruits]]
-     * name = "banana"
-     *
-     * [[fruits.varieties]]
-     * name = "plantain"
-     * </code>
-     * <code>
-     *     {
-     *         "fruits": [
-     *             {
-     *                 "name": "apple",
-     *                 "physical": {
-     *                     "color": "red",
-     *                     "shape": "round"
-     *                 },
-     *                 "varieties": [
-     *                     { "name": "red delicious" },
-     *                     { "name": "granny smith" }
-     *                 ]
-     *             },
-     *             {
-     *                 "name": "banana",
-     *                 "varieties": [
-     *                     { "name": "plantain" }
-     *                 ]
-     *             }
-     *         ]
-     *     }
-     * </code>
-     * <code>
-     * $this->hierarchyCounter = [
-     *  'fruits' => 2,
-     *  'fruits.[0].varieties' => 2,
-     *  'fruits.[1].varieties' => 1,
-     * ];
-     * </code>
-     *
-     * @var array<string, int>
-     */
-    private array $hierarchyCounter = [];
 
     /**
      * @throws TomlError
@@ -198,7 +135,7 @@ final class TomlKeystore
             $foundArrayTableHeader = self::makeHeaderFromArrayTable($foundArrayTable);
 
             $components = array_filter(
-                explode('.', substr($header, strlen($foundArrayTableHeader))),
+                self::unescapedExplode('.', substr($header, strlen($foundArrayTableHeader))),
                 static fn (string $component) => $component !== ''
             );
 
@@ -212,10 +149,15 @@ final class TomlKeystore
         $i = 0;
         foreach ($components as $component) {
 
+            if (str_contains($component, '.')) {
+                $component = str_replace('.', '\.', $component);
+            }
+
             if ($i === 0) {
                 $key .= $component;
             } else {
-                $key .= ".$component";
+
+                $key .= ".{$component}";
             }
 
             $i++;
@@ -234,7 +176,7 @@ final class TomlKeystore
 
     public static function makeHeaderFromArrayTable(string $arrayTable): string
     {
-        $items = explode('.', $arrayTable);
+        $items = self::unescapedExplode('.', $arrayTable);
         $items = array_filter($items, fn ($item) => ! str_starts_with($item, '['));
 
         return implode('.', $items);
@@ -291,5 +233,13 @@ final class TomlKeystore
     public static function makeKey(KeyNode $keyNode): string
     {
         return implode('.', self::makeKeyComponents($keyNode));
+    }
+
+    protected static function unescapedExplode(string $character, string $value): array
+    {
+        return array_map(
+            fn ($item) => str_replace('~!~!~', $character, $item),
+            explode($character, str_replace('\\'.$character, '~!~!~', $value))
+        );
     }
 }

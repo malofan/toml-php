@@ -33,4 +33,11 @@ abstract class AbstractTomlDateTime
     {
         return $value >= 0 && $value < 60;
     }
+
+    protected function zeroPad(int $int): string
+    {
+        return str_pad((string) $int, 2, '0', STR_PAD_LEFT);
+    }
+
+    abstract public function __toString(): string;
 }

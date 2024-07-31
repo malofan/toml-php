@@ -33,6 +33,6 @@ final class TomlLocalDateTime extends AbstractTomlDateTime
 
     public function __toString(): string
     {
-        return "$this->year-$this->month-$this->day\T$this->hour-$this->minute-$this->second".($this->millisecond ? '.'.$this->millisecond : '');
+        return "$this->year-{$this->zeroPad($this->month)}-{$this->zeroPad($this->day)}\T{$this->zeroPad($this->hour)}:{$this->zeroPad($this->minute)}:{$this->zeroPad($this->second)}".($this->millisecond ? '.'.$this->millisecond : '');
     }
 }

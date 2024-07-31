@@ -39,6 +39,6 @@ final class TomlLocalTime extends AbstractTomlDateTime
 
     public function __toString(): string
     {
-        return "$this->hour-$this->minute-$this->second".($this->millisecond ? '.'.$this->millisecond : '');
+        return "{$this->zeroPad($this->hour)}:{$this->zeroPad($this->minute)}:{$this->zeroPad($this->second)}".($this->millisecond ? '.'.$this->millisecond : '');
     }
 }

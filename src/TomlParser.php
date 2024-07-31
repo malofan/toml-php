@@ -441,7 +441,7 @@ final class TomlParser
      */
     public function float($value): FloatNode
     {
-        $parsed = $this->parseInteger($value, true, false, true, 10);
+        $parsed = $this->parseInteger($value, true, true, true, 10);
         $float = $parsed['int'];
         $unparsed = $parsed['unparsed'];
 
