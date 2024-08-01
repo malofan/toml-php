@@ -11,19 +11,13 @@ use Devium\Toml\Nodes\TableNode;
 
 final class TomlKeystore
 {
-    private array $keys = [];
+    private array $keys = []; // set
 
-    /**
-     * @var string[]
-     */
-    private array $tables = [];
+    private array $tables = []; // list
 
-    private array $implicitTables = [];
+    private array $arrayTables = []; // list
 
-    /**
-     * @var string[]
-     */
-    private array $arrayTables = [];
+    private array $implicitTables = []; // set
 
     /**
      * @throws TomlError
@@ -57,18 +51,14 @@ final class TomlKeystore
             $key = "$table.";
         }
 
-        $components = self::makeKeyComponents($node->key);
+        $components = $this->makeKeyComponents($node->key);
 
         for ($i = 0; $i < count($components); $i++) {
             $component = $components[$i];
 
-            if ($i === 0) {
-                $key .= $component;
-            } else {
-                $key .= ".$component";
-            }
+            $key .= ($i ? '.' : '').$component;
 
-            if ($this->keysContains($key) || in_array($key, $this->tables)) {
+            if ($this->keysContains($key) || $this->tablesContains($key) || $this->tablesContainsZeroIndex($key)) {
                 throw new TomlError();
             }
 
@@ -86,43 +76,18 @@ final class TomlKeystore
         $this->keysAdd($key);
     }
 
-    public static function makeKeyComponents(KeyNode $keyNode): array
-    {
-        return array_map(fn (BareNode|StringNode $key) => $key->value, $keyNode->keys());
-    }
-
-    protected function keysContains(string $key): bool
-    {
-        return isset($this->keys[$key]);
-    }
-
-    protected function implicitTablesAdd(string $key): void
-    {
-        $this->implicitTables[$key] = true;
-    }
-
-    protected function implicitTablesContains(string $key): bool
-    {
-        return isset($this->implicitTables[$key]);
-    }
-
-    protected function keysAdd(string $key): void
-    {
-        $this->keys[$key] = true;
-    }
-
     /**
      * @throws TomlError
      */
     protected function addTableNode(TableNode $tableNode): void
     {
-        $components = self::makeKeyComponents($tableNode->key);
-        $header = implode('.', $components);
+        $components = $this->makeKeyComponents($tableNode->key);
+        $header = $this->makeKey($tableNode->key);
         $arrayTable = array_reverse($this->arrayTables);
         $foundArrayTable = null;
 
         foreach ($arrayTable as $arrayTableItem) {
-            if (str_starts_with($header, self::makeHeaderFromArrayTable($arrayTableItem))) {
+            if (str_starts_with($header, $this->makeHeaderFromArrayTable($arrayTableItem))) {
                 $foundArrayTable = $arrayTableItem;
 
                 break;
@@ -132,14 +97,14 @@ final class TomlKeystore
         $key = '';
 
         if ($foundArrayTable !== null) {
-            $foundArrayTableHeader = self::makeHeaderFromArrayTable($foundArrayTable);
+            $foundArrayTableHeader = $this->makeHeaderFromArrayTable($foundArrayTable);
 
             $components = array_filter(
-                self::unescapedExplode('.', substr($header, strlen($foundArrayTableHeader))),
+                $this->unescapedExplode('.', substr($header, strlen($foundArrayTableHeader))),
                 static fn (string $component) => $component !== ''
             );
 
-            if (empty($components)) {
+            if (! $components) {
                 throw new TomlError();
             }
 
@@ -149,16 +114,9 @@ final class TomlKeystore
         $i = 0;
         foreach ($components as $component) {
 
-            if (str_contains($component, '.')) {
-                $component = str_replace('.', '\.', $component);
-            }
+            $component = str_replace('.', '\.', $component);
 
-            if ($i === 0) {
-                $key .= $component;
-            } else {
-
-                $key .= ".{$component}";
-            }
+            $key .= ($i ? '.' : '').$component;
 
             $i++;
 
@@ -167,19 +125,11 @@ final class TomlKeystore
             }
         }
 
-        if (in_array($key, $this->arrayTables) || in_array($key, $this->tables) || $this->implicitTablesContains($key)) {
+        if ($this->arrayTablesContains($key) || $this->tablesContains($key) || $this->implicitTablesContains($key)) {
             throw new TomlError();
         }
 
         $this->tables[] = $key;
-    }
-
-    public static function makeHeaderFromArrayTable(string $arrayTable): string
-    {
-        $items = self::unescapedExplode('.', $arrayTable);
-        $items = array_filter($items, fn ($item) => ! str_starts_with($item, '['));
-
-        return implode('.', $items);
     }
 
     /**
@@ -187,13 +137,11 @@ final class TomlKeystore
      */
     protected function addArrayTableNode(ArrayTableNode $arrayTableNode): void
     {
-        $header = self::makeKey($arrayTableNode->key);
+        $header = $this->makeKey($arrayTableNode->key);
 
-        if ($this->keysContains($header)) {
-            throw new TomlError();
-        }
-
-        if (in_array($header, $this->tables) || $this->implicitTablesContains($header)) {
+        if (
+            $this->keysContains($header) || $this->tablesContains($header) || $this->implicitTablesContains($header)
+        ) {
             throw new TomlError();
         }
 
@@ -202,7 +150,7 @@ final class TomlKeystore
 
         for ($i = count($this->arrayTables) - 1; $i >= 0; $i--) {
             $arrayTable = $this->arrayTables[$i];
-            $arrayTableHeader = self::makeHeaderFromArrayTable($arrayTable);
+            $arrayTableHeader = $this->makeHeaderFromArrayTable($arrayTable);
 
             if ($arrayTableHeader === $header) {
                 $index++;
@@ -221,7 +169,7 @@ final class TomlKeystore
             throw new TomlError();
         }
 
-        if ($this->keysContains($key) || in_array($key, $this->tables)) {
+        if ($this->keysContains($key) || $this->tablesContains($key)) {
             throw new TomlError();
         }
 
@@ -230,12 +178,63 @@ final class TomlKeystore
         $this->tables[] = $key;
     }
 
-    public static function makeKey(KeyNode $keyNode): string
+    protected function keysContains(string $key): bool
     {
-        return implode('.', self::makeKeyComponents($keyNode));
+        return isset($this->keys[$key]);
     }
 
-    protected static function unescapedExplode(string $character, string $value): array
+    protected function tablesContains(string $key): bool
+    {
+        return in_array($key, $this->tables);
+    }
+
+    protected function tablesContainsZeroIndex(string $key): bool
+    {
+        return in_array("$key.[0]", $this->tables);
+    }
+
+    protected function arrayTablesContains(string $key): bool
+    {
+        return in_array($key, $this->arrayTables);
+    }
+
+    protected function implicitTablesContains(string $key): bool
+    {
+        return isset($this->implicitTables[$key]);
+    }
+
+    protected function implicitTablesAdd(string $key): void
+    {
+        $this->implicitTables[$key] = true;
+    }
+
+    protected function keysAdd(string $key): void
+    {
+        $this->keys[$key] = true;
+    }
+
+    protected function makeKey(KeyNode $keyNode): string
+    {
+        return implode('.', $this->makeKeyComponents($keyNode));
+    }
+
+    protected function makeKeyComponents(KeyNode $keyNode): array
+    {
+        return array_map(fn (BareNode|StringNode $key) => $key->value, $keyNode->keys());
+    }
+
+    protected function makeHeaderFromArrayTable(string $arrayTable): string
+    {
+        return implode(
+            '.',
+            array_filter(
+                $this->unescapedExplode('.', $arrayTable),
+                fn ($item) => ! str_starts_with($item, '[')
+            )
+        );
+    }
+
+    protected function unescapedExplode(string $character, string $value): array
     {
         return array_map(
             fn ($item) => str_replace('~!~!~', $character, $item),
