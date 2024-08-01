@@ -5,19 +5,17 @@ namespace Devium\Toml;
 use ArrayObject;
 use stdClass;
 
-class TomlDecoder
+readonly class TomlDecoder
 {
     /**
      * @throws TomlError
      */
-    public function decode($input): array|stdClass
+    public function decode(string $input): array|stdClass
     {
         $parser = new TomlParser($input);
-        $node = $parser->parse();
+        $normalizer = new TomlNormalizer;
 
-        $normalized = TomlNormalizer::normalize($node);
-
-        return $this->arrayObjectToStdClass($normalized);
+        return $this->arrayObjectToStdClass($normalizer->normalize($parser->parse()));
     }
 
     protected function arrayObjectToStdClass(iterable $arrayObject): array|stdClass
@@ -25,14 +23,9 @@ class TomlDecoder
         $return = [];
 
         foreach ($arrayObject as $key => $value) {
-            if ($value instanceof ArrayObject || is_array($value)) {
-                $return[$key] = $this->arrayObjectToStdClass($value);
-            } else {
-                $return[$key] = $value;
-            }
+            $return[$key] = $value instanceof ArrayObject || is_array($value) ? $this->arrayObjectToStdClass($value) : $value;
         }
 
         return is_array($arrayObject) ? $return : (object) $return;
-
     }
 }

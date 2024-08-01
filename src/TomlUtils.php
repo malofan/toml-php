@@ -38,7 +38,7 @@ final class TomlUtils
             return substr($str, $start);
         }
 
-        $end = $end - $start;
+        $end -= $start;
 
         return substr($str, $start, $end);
     }

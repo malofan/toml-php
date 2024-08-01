@@ -28,39 +28,39 @@ final class TomlNormalizer
     /**
      * @throws TomlError
      */
-    public static function normalize(Nodes\Node $node): mixed
+    public function normalize(Nodes\Node $node): mixed
     {
         switch ($node::class) {
             case InlineTableNode::class:
             case RootTableNode::class:
-                $elements = self::mapNormalize($node->elements());
+                $elements = $this->mapNormalize($node->elements());
 
-                return self::merge(...$elements);
+                return $this->merge(...$elements);
 
             case KeyNode::class:
-                return self::mapNormalize($node->keys());
+                return $this->mapNormalize($node->keys());
 
             case KeyValuePairNode::class:
 
-                $key = self::normalize($node->key);
-                $value = self::normalize($node->value);
+                $key = $this->normalize($node->key);
+                $value = $this->normalize($node->value);
 
-                return self::objectify($key, $value);
+                return $this->objectify($key, $value);
 
             case TableNode::class:
-                $key = self::normalize($node->key);
-                $elements = self::mapNormalize($node->elements());
+                $key = $this->normalize($node->key);
+                $elements = $this->mapNormalize($node->elements());
 
-                return self::objectify($key, self::merge(...$elements));
+                return $this->objectify($key, $this->merge(...$elements));
 
             case ArrayTableNode::class:
-                $key = self::normalize($node->key);
-                $elements = self::mapNormalize($node->elements());
+                $key = $this->normalize($node->key);
+                $elements = $this->mapNormalize($node->elements());
 
-                return self::objectify($key, [self::merge(...$elements)]);
+                return $this->objectify($key, [$this->merge(...$elements)]);
 
             case ArrayNode::class:
-                return self::mapNormalize($node->elements());
+                return $this->mapNormalize($node->elements());
 
             case OffsetDateTimeNode::class:
             case LocalDateTimeNode::class:
@@ -81,15 +81,15 @@ final class TomlNormalizer
     /**
      * @throws TomlError
      */
-    public static function mapNormalize(array $items): array
+    public function mapNormalize(array $items): array
     {
-        return array_map(fn ($element) => self::normalize($element), $items);
+        return array_map(fn ($element) => $this->normalize($element), $items);
     }
 
     /**
      * @throws TomlError
      */
-    public static function merge(...$values): ArrayObject
+    public function merge(...$values): ArrayObject
     {
         return array_reduce($values, function (ArrayObject $acc, $value) {
             foreach ($value as $key => $nextValue) {
@@ -98,18 +98,18 @@ final class TomlNormalizer
 
                 if (is_array($prevValue) && is_array($nextValue)) {
                     $acc->{$key} = array_merge($prevValue, $nextValue);
-                } elseif (self::isKeyValuePair($prevValue) && self::isKeyValuePair($nextValue)) {
-                    $acc->{$key} = self::merge($prevValue, $nextValue);
+                } elseif ($this->isKeyValuePair($prevValue) && $this->isKeyValuePair($nextValue)) {
+                    $acc->{$key} = $this->merge($prevValue, $nextValue);
                 } elseif (is_array($prevValue) &&
-                    self::isKeyValuePair(end($prevValue)) &&
-                    self::isKeyValuePair($nextValue)) {
+                    $this->isKeyValuePair(end($prevValue)) &&
+                    $this->isKeyValuePair($nextValue)) {
                     $prevValueLastElement = end($prevValue);
                     $acc->{$key} = array_merge(
                         array_slice($prevValue, 0, -1),
-                        [self::merge($prevValueLastElement, $nextValue)]
+                        [$this->merge($prevValueLastElement, $nextValue)]
                     );
                 } elseif (isset($prevValue)) {
-                    throw new TomlError();
+                    throw new TomlError;
                 } else {
                     $acc->{$key} = $nextValue;
                 }
@@ -119,9 +119,8 @@ final class TomlNormalizer
         }, new ArrayObject([], ArrayObject::ARRAY_AS_PROPS));
     }
 
-    public static function isKeyValuePair($value): bool
+    public function isKeyValuePair($value): bool
     {
-
         if ($value instanceof AbstractTomlDateTime) {
             return false;
         }
@@ -132,7 +131,7 @@ final class TomlNormalizer
     /**
      * @param  string[]  $keys
      */
-    public static function objectify(array $keys, $value): ArrayObject
+    public function objectify(array $keys, $value): ArrayObject
     {
         $initialValue = new ArrayObject([], ArrayObject::ARRAY_AS_PROPS);
         $object = &$initialValue;

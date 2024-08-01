@@ -6,7 +6,7 @@ use stdClass;
 
 class TomlTag
 {
-    public static function tagObject(mixed $obj): stdClass|array
+    public static function tagObject(mixed $obj): array|stdClass
     {
         if (is_int($obj)) {
             return ['type' => 'integer', 'value' => (string) $obj];
@@ -55,10 +55,10 @@ class TomlTag
         }
 
         if (is_array($obj)) {
-            return array_map(fn ($item) => self::tagObject($item), $obj);
+            return array_map(static fn ($item) => self::tagObject($item), $obj);
         }
 
-        $tagged = new stdClass();
+        $tagged = new stdClass;
 
         if ($obj instanceof stdClass) {
             $obj = get_object_vars($obj);

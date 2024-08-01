@@ -2,7 +2,7 @@
 
 namespace Devium\Toml;
 
-abstract class AbstractTomlDateTime
+abstract class AbstractTomlDateTime implements \Stringable
 {
     protected static function isYear(int $value): bool
     {
@@ -34,10 +34,10 @@ abstract class AbstractTomlDateTime
         return $value >= 0 && $value < 60;
     }
 
+    abstract public function __toString(): string;
+
     protected function zeroPad(int $int): string
     {
         return str_pad((string) $int, 2, '0', STR_PAD_LEFT);
     }
-
-    abstract public function __toString(): string;
 }

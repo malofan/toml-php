@@ -33,12 +33,12 @@ final class TomlError extends Exception
     {
         $lines = preg_split('/\r\n|\n|\r/', TomlUtils::stringSlice($string, 0, $pointer));
 
-        return [count($lines), strlen(array_pop($lines))];
+        return [count($lines), strlen((string) array_pop($lines))];
     }
 
     protected function makeCodeBlock($string, $line, $column): string
     {
-        $lines = preg_split('/\r\n|\n|\r/', $string);
+        $lines = preg_split('/\r\n|\n|\r/', (string) $string);
         $codeBlock = '';
 
         $numberLen = ((int) log10($line + 1) | 0) + 1;

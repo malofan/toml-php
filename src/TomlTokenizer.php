@@ -31,13 +31,24 @@ final class TomlTokenizer
 
     protected TomlInputIterator $iterator;
 
+    /**
+     * @throws TomlError
+     */
     public function __construct(string $input)
     {
-        if (preg_match('/"""\n?.*\\\\ /', $input) || preg_match('/\\\\ .*\n?"""/', $input)) {
-            throw new TomlError();
-        }
+        $this->validateInput($input);
         $this->input = $input;
         $this->iterator = new TomlInputIterator($input);
+    }
+
+    /**
+     * @throws TomlError
+     */
+    protected function validateInput(string $input): void
+    {
+        if (preg_match('/("""\n?.*\\\\ )|(\\\\ .*\n?""")/', $input)) {
+            throw new TomlError;
+        }
     }
 
     /**
@@ -46,7 +57,7 @@ final class TomlTokenizer
     public function assert(...$types): void
     {
         if (! $this->take(...$types)) {
-            throw new TomlError();
+            throw new TomlError;
         }
     }
 
@@ -98,20 +109,15 @@ final class TomlTokenizer
         if ($this->isBare($char)) {
             return $this->scanBare($start);
         }
-        switch ($char) {
-            case ' ':
-            case "\t":
-                return $this->scanWhitespace($start);
-            case '#':
-                return $this->scanComment($start);
-            case "'":
-                return $this->scanLiteralString();
-            case '"':
-                return $this->scanBasicString();
-            case '-1':
-                return TomlToken::fromArray(['type' => 'EOF']);
-        }
-        throw new TomlError();
+
+        return match ($char) {
+            ' ', "\t" => $this->scanWhitespace($start),
+            '#' => $this->scanComment($start),
+            "'" => $this->scanLiteralString(),
+            '"' => $this->scanBasicString(),
+            '-1' => TomlToken::fromArray(['type' => 'EOF']),
+            default => throw new TomlError,
+        };
     }
 
     public function isPunctuatorOrNewline($char): bool
@@ -176,6 +182,11 @@ final class TomlTokenizer
         return $this->returnScan('COMMENT', $start);
     }
 
+    public function isEOF(): bool
+    {
+        return $this->iterator->isEOF();
+    }
+
     public function isControlCharacterOtherThanTab($char): bool
     {
         return $this->isControlCharacter($char) && $char !== "\t";
@@ -219,7 +230,7 @@ final class TomlTokenizer
             switch ($char) {
                 case "\n":
                     if (! $isMultiline) {
-                        throw new TomlError();
+                        throw new TomlError;
                     }
                     $value .= $char;
 
@@ -247,7 +258,7 @@ final class TomlTokenizer
                     break;
                 default:
                     if ($this->iterator->isEOF() || $this->isControlCharacterOtherThanTab($char)) {
-                        throw new TomlError();
+                        throw new TomlError;
                     }
                     switch ($delimiter) {
                         case "'":
@@ -268,13 +279,13 @@ final class TomlTokenizer
                                     for ($i = 0; $i < $size; $i++) {
                                         $char = $this->iterator->next();
                                         if ($char === '-1' || ! TomlUtils::isUnicode($char)) {
-                                            throw new TomlError();
+                                            throw new TomlError;
                                         }
                                         $codePoint .= $char;
                                     }
                                     $result = mb_chr(intval($codePoint, 16));
                                     if (! $this->isUnicodeCharacter($result)) {
-                                        throw new TomlError();
+                                        throw new TomlError;
                                     }
                                     $value .= $result;
 
@@ -287,7 +298,7 @@ final class TomlTokenizer
 
                                     continue 3;
                                 }
-                                throw new TomlError();
+                                throw new TomlError;
                             }
                             $value .= $char;
 
@@ -341,14 +352,9 @@ final class TomlTokenizer
     {
         $token = $this->next();
         if ($token->type !== $type) {
-            throw new TomlError();
+            throw new TomlError;
         }
 
         return $token;
-    }
-
-    public function isEOF(): bool
-    {
-        return $this->iterator->isEOF();
     }
 }

@@ -2,7 +2,7 @@
 
 use Devium\Toml\TomlDecoder;
 
-$toml = <<<'TOML'
+$toml = <<<'TOML_WRAP'
 # This is a TOML document
 
 title = "TOML Example"
@@ -46,7 +46,7 @@ name = "banana"
 
 [[fruits.varieties]]
 name = "plantain"
-TOML;
+TOML_WRAP;
 
 $json = <<<'JSON'
 {
@@ -109,6 +109,6 @@ $json = <<<'JSON'
 JSON;
 
 it('can parse toml', function () use ($toml, $json) {
-    $decoder = new TomlDecoder();
+    $decoder = new TomlDecoder;
     expect($decoder->decode($toml))->toEqual(json_decode($json, false));
 });
