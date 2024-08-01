@@ -88,7 +88,7 @@ final class TomlKeystore
 
     public static function makeKeyComponents(KeyNode $keyNode): array
     {
-        return array_map(fn (BareNode|StringNode $key) => $key->value, $keyNode->keys());
+        return array_map(fn (BareNode|StringNode $key) => str_replace('.', '\.', $key->value), $keyNode->keys());
     }
 
     protected function keysContains(string $key): bool
@@ -187,7 +187,7 @@ final class TomlKeystore
      */
     protected function addArrayTableNode(ArrayTableNode $arrayTableNode): void
     {
-        $header = self::makeKey($arrayTableNode->key);
+        $header = $this->makeTableKeyPrefix($arrayTableNode->key);
 
         if ($this->keysContains($header)) {
             throw new TomlError();
@@ -199,23 +199,6 @@ final class TomlKeystore
 
         $key = $header;
         $index = 0;
-
-        for ($i = count($this->arrayTables) - 1; $i >= 0; $i--) {
-            $arrayTable = $this->arrayTables[$i];
-            $arrayTableHeader = self::makeHeaderFromArrayTable($arrayTable);
-
-            if ($arrayTableHeader === $header) {
-                $index++;
-
-                continue;
-            }
-
-            if (str_starts_with($header, $arrayTableHeader)) {
-                $key = $arrayTable.substr($header, strlen($arrayTableHeader));
-
-                break;
-            }
-        }
 
         if ($index === 0 && ! empty(array_filter($this->tables, fn ($table) => str_starts_with($table, $header)))) {
             throw new TomlError();
@@ -230,9 +213,38 @@ final class TomlKeystore
         $this->tables[] = $key;
     }
 
-    public static function makeKey(KeyNode $keyNode): string
+    private function makeTableKeyPrefix(KeyNode $keyNode): string
     {
-        return implode('.', self::makeKeyComponents($keyNode));
+        $components = self::makeKeyComponents($keyNode);
+
+        $headerParts = [];
+        for ($c = 0; $c < count($components); $c++) {
+            $component = $components[$c];
+            $headerParts[] = $component;
+
+            $header = implode('.', $headerParts);
+
+            if (! isset($components[$c + 1])) {
+                return $header;
+            }
+
+            if (! in_array($header, $this->tables)) {
+                $this->tables[] = $header;
+            }
+
+            $i = 0;
+            if (! in_array($header . ".[$i]", $this->arrayTables)) {
+                continue;
+            }
+
+            while (in_array($header . ".[" . ($i+1) . "]", $this->arrayTables)) {
+                $i++;
+            }
+
+            $headerParts[] = "[$i]";
+        }
+
+        return implode('.', $headerParts);
     }
 
     protected static function unescapedExplode(string $character, string $value): array
